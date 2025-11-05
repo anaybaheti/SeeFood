@@ -3,45 +3,26 @@ package com.cs407.seefood
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cs407.seefood.ui.SeeFoodApp
+import com.cs407.seefood.ui.SeeFoodViewModel
 import com.cs407.seefood.ui.theme.SeeFoodTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        // ViewModel factory that provides Application to AndroidViewModel
+        val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+
         setContent {
             SeeFoodTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                // You can create it here and pass down,
+                // or let each screen use viewModel(factory = factory)
+                val vm: SeeFoodViewModel = viewModel(factory = factory)
+                SeeFoodApp(vm)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SeeFoodTheme {
-        Greeting("Android")
     }
 }
