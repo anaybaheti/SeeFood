@@ -1,18 +1,32 @@
+//// app/src/main/java/com/cs407/seefood/data/SeeFoodRepository.kt
+//package com.cs407.seefood.data
+//
+//import com.cs407.seefood.BuildConfig
+//import com.cs407.seefood.network.Recipe
+//
+//class SeeFoodRepository {
+//    private val apiKey: String = BuildConfig.OPENAI_API_KEY
+//    private val llm = LlmRecipeClient(apiKey)
+//
+//    suspend fun suggestRecipesFrom(ingredients: List<String>): List<Recipe> {
+//        return llm.suggest(ingredients)
+//    }
+//}
+
 package com.cs407.seefood.data
 
-import android.content.Context
-import com.cs407.seefood.R
-import com.cs407.seefood.data.LlmRecipeClient.Provider
-import com.cs407.seefood.network.IngredientsResponse
+import com.cs407.seefood.BuildConfig
+import com.cs407.seefood.network.Recipe
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class SeeFoodRepository(private val context: Context) {
+class SeeFoodRepository {
+    private val apiKey: String = BuildConfig.OPENAI_API_KEY
+    private val llm = LlmRecipeClient(openAiApiKey = apiKey)
 
-    private val apiKey: String by lazy { context.getString(R.string.openai_api_key) }
-
-    private val llm = LlmRecipeClient(Provider.OPENAI, apiKey)
-
-    suspend fun suggestRecipesFrom(ingredients: List<String>): IngredientsResponse {
-        require(apiKey.isNotBlank()) { "Missing OPENAI_API_KEY (gradle.properties -> resValue)" }
-        return llm.suggest(ingredients)
-    }
+    suspend fun suggestRecipesFrom(ingredients: List<String>): List<Recipe> =
+        withContext(Dispatchers.IO) {
+            llm.suggest(ingredients)
+        }
 }
+

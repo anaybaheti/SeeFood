@@ -22,7 +22,6 @@ fun HomeScreen(
         Spacer(Modifier.height(8.dp))
         Button(onClick = onNutrition, modifier = Modifier.fillMaxWidth()) { Text("Nutrition Log") }
         Spacer(Modifier.height(8.dp))
-        Button(onClick = onProfile, modifier = Modifier.fillMaxWidth()) { Text("Profile & Settings") }
+        Button(onClick = onProfile, modifier = Modifier.fillMaxWidth()) { Text("Profile") }
     }
 }
-

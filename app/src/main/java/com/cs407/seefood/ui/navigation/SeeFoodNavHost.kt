@@ -4,20 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.cs407.seefood.ui.SeeFoodViewModel
 import com.cs407.seefood.ui.screens.*
 
-//object NavRoutes {
-//    const val Login = "login"
-//    const val Home = "home"
-//    const val Scan = "scan"
-//    const val Confirm = "confirm"
-//    const val Recipes = "recipes"
-//    const val Nutrition = "nutrition"
-//    const val Profile = "profile"
-//}
-
 @Composable
-fun SeeFoodNavHost(startDestination: String = NavRoutes.Login) {
+fun SeeFoodNavHost(
+    vm: SeeFoodViewModel,
+    startDestination: String = NavRoutes.Login
+) {
     val nav = rememberNavController()
 
     NavHost(navController = nav, startDestination = startDestination) {
@@ -40,23 +34,15 @@ fun SeeFoodNavHost(startDestination: String = NavRoutes.Login) {
         }
 
         composable(NavRoutes.Scan) {
-            ScanScreen()
+            ScanScreen(vm = vm, onConfirm = { nav.navigate(NavRoutes.Confirm) })
         }
 
         composable(NavRoutes.Confirm) {
-            ConfirmIngredientsScreen(onDone = { nav.navigate(NavRoutes.Recipes) })
+            ConfirmIngredientsScreen(vm = vm, onDone = { nav.navigate(NavRoutes.Recipes) })
         }
 
-        composable(NavRoutes.Recipes) {
-            RecipesScreen()
-        }
-
-        composable(NavRoutes.Nutrition) {
-            NutritionScreen()
-        }
-
-        composable(NavRoutes.Profile) {
-            ProfileScreen()
-        }
+        composable(NavRoutes.Recipes) { RecipesScreen(vm = vm) }
+        composable(NavRoutes.Nutrition) { NutritionScreen() }
+        composable(NavRoutes.Profile) { ProfileScreen() }
     }
 }
