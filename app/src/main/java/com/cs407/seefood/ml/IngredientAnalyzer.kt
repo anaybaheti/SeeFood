@@ -62,7 +62,7 @@ class IngredientAnalyzer(
     companion object {
         // Cheap heuristics to filter to likely foods
         private val FOOD_HINTS = listOf("apple","banana","tomato","potato","carrot","onion","bread","milk","egg","cheese",
-            "lettuce","spinach","cucumber","pepper","pasta","noodle","rice","meat","chicken","beef","fish","yogurt","butter")
+            "lettuce","spinach","cucumber","pepper","pasta","noodle","rice","meat","chicken","beef","fish","yogurt","butter", "ketchup","coffee")
         private val FOOD_WHITELIST = FOOD_HINTS.toSet()
     }
 }
