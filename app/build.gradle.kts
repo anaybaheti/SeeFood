@@ -7,7 +7,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-// --- Load OPENAI_API_KEY from local.properties (or env var in CI) ---
 val localProps = Properties()
 val lpFile = rootProject.file("local.properties")
 if (lpFile.exists()) {
@@ -59,53 +58,6 @@ android {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
 }
-
-//dependencies {
-//    // Compose (BOM keeps versions aligned)
-//    implementation(platform(libs.androidx.compose.bom))
-//    implementation(libs.androidx.compose.ui)
-//    implementation(libs.androidx.compose.ui.graphics)
-//    implementation(libs.androidx.compose.ui.tooling.preview)
-//    implementation(libs.androidx.compose.material3)
-//    implementation(libs.androidx.compose.foundation)
-//    debugImplementation(libs.androidx.compose.ui.tooling)
-//    androidTestImplementation(platform(libs.androidx.compose.bom))
-//    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-//    debugImplementation(libs.androidx.compose.ui.test.manifest)
-//
-//    // Activity + Lifecycle/ViewModel in Compose
-//    implementation(libs.androidx.activity.compose)
-//    implementation(libs.androidx.lifecycle.runtime.ktx)
-//    implementation(libs.androidx.lifecycle.viewmodel.compose)
-//
-//    // Navigation
-//    implementation(libs.androidx.navigation.compose)
-//
-//    // Networking (Retrofit + OkHttp + Kotlinx Serialization)
-//    implementation(libs.retrofit.core)
-//    implementation(libs.okhttp.logging)
-//    implementation(libs.kotlinx.serialization.json)
-//    implementation(libs.retrofit.kotlinx.serialization.converter)
-//
-//    // Images
-//    implementation(libs.coil.compose)
-//
-//    // CameraX
-//    implementation(libs.camerax.core)
-//    implementation(libs.camerax.camera2)
-//    implementation(libs.camerax.lifecycle)
-//    implementation(libs.camerax.view)
-//
-//    // ML Kit
-//    implementation("com.google.mlkit:image-labeling:17.0.9")
-//    implementation("com.google.mlkit:object-detection:17.0.2")
-//    implementation("com.google.mlkit:image-labeling-custom:17.0.3")
-//
-//    // Tests
-//    testImplementation(libs.junit)
-//    androidTestImplementation(libs.androidx.junit)
-//    androidTestImplementation(libs.androidx.espresso.core)
-//}
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
