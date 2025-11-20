@@ -202,6 +202,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -417,35 +418,50 @@ fun ConfirmIngredientsScreen(
         if (showAddDialog) {
             AlertDialog(
                 onDismissRequest = { showAddDialog = false },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            if (manualName.isNotBlank()) {
-                                vm.addManual(manualName)
-                                manualName = ""
-                            }
-                            showAddDialog = false
-                        }
-                    ) {
-                        Text("Add")
-                    }
+                shape = RoundedCornerShape(24.dp),
+                containerColor = Color.White,
+                title = {
+                    Text(
+                        text = "Add ingredient",
+                        fontWeight = FontWeight.SemiBold,
+                        color = textDark
+                    )
                 },
-                dismissButton = {
-                    IconButton(onClick = { showAddDialog = false }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Cancel")
-                    }
-                },
-                title = { Text("Add ingredient") },
                 text = {
                     OutlinedTextField(
                         value = manualName,
                         onValueChange = { manualName = it },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g. Butter") }
+                        placeholder = { Text("e.g. Butter") },
+                        shape = RoundedCornerShape(16.dp)
                     )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (manualName.isNotBlank()) {
+                                vm.addManual(manualName.trim())
+                                manualName = ""
+                            }
+                            showAddDialog = false
+                        },
+                        shape = RoundedCornerShape(999.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = brandGreen,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Add")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAddDialog = false }) {
+                        Text("Cancel", color = Color(0xFF6B7280))
+                    }
                 }
             )
         }
+
     }
 }
