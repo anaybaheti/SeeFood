@@ -9,8 +9,14 @@
 //import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 //
 ///**
-// * Converts camera frames to ingredient names using ML Kit Image Labeling.
+// * Converts camera frames to ingredient-like labels using ML Kit Image Labeling.
 // * Emits debounced results via onIngredients callback.
+// *
+// * This version:
+// *  - Lets ML Kit generate labels for anything
+// *  - Normalizes them (lowercase, singular-ish)
+// *  - Filters out obvious NON-food labels
+// *  - Keeps labels that look like food ingredients/items
 // */
 //class IngredientAnalyzer(
 //    private val onIngredients: (List<String>) -> Unit
@@ -18,11 +24,10 @@
 //
 //    private val labeler = ImageLabeling.getClient(
 //        ImageLabelerOptions.Builder()
-//            .setConfidenceThreshold(0.30f) // tune as needed
+//            .setConfidenceThreshold(0.10f) // slightly lower; we filter manually
 //            .build()
 //    )
 //
-//    // simple debouncer so we don't spam UI every frame
 //    private var lastEmitted = emptyList<String>()
 //    private var frameCounter = 0
 //
@@ -30,42 +35,142 @@
 //    override fun analyze(imageProxy: ImageProxy) {
 //        val mediaImage = imageProxy.image
 //        if (mediaImage == null) {
-//            imageProxy.close(); return
+//            imageProxy.close()
+//            return
 //        }
+//
 //        val rotation = imageProxy.imageInfo.rotationDegrees
 //        val input = InputImage.fromMediaImage(mediaImage, rotation)
 //
 //        labeler.process(input)
 //            .addOnSuccessListener { labels ->
-//                // Map generic labels -> ingredient-like tokens
-//                val raw = labels.map { it.text.lowercase() }
+//                if (labels.isEmpty()) {
+//                    imageProxy.close()
+//                    return@addOnSuccessListener
+//                }
 //
-//                // Basic normalization: keep food-ish words; strip plurals; dedupe
-//                val keep = raw
-//                    .map { it.replace("_", " ") }
-//                    .map { if (it.endsWith("s")) it.dropLast(1) else it }
-//                    .filter { FOOD_HINTS.any { hint -> it.contains(hint) } || FOOD_WHITELIST.contains(it) }
+//                // All raw labels from ML Kit, normalized
+//                val raw = labels
+//                    .sortedByDescending { it.confidence }
+//                    .map { it.text.lowercase().replace("_", " ").trim() }
+//
+//                val normalized = raw
+//                    .map { normalizeLabel(it) }
+//                    .filter { it.isNotBlank() }
+//
+//                // Keep ONLY labels that look like food ingredients/items
+//                val foods = normalized
+//                    .filter { looksLikeFood(it) }
 //                    .distinct()
+//                    .take(8) // no need to spam with a huge list
 //
-//                // Emit every ~5 frames or when there’s a change
+//                if (foods.isEmpty()) {
+//                    // No food detected in this frame → keep previous list
+//                    return@addOnSuccessListener
+//                }
+//
 //                frameCounter++
-//                val changed = keep.size != lastEmitted.size || keep.any { it !in lastEmitted }
+//                val changed =
+//                    foods.size != lastEmitted.size || foods.any { it !in lastEmitted }
+//
 //                if ((frameCounter % 5 == 0) || changed) {
-//                    lastEmitted = keep
-//                    onIngredients(keep)
+//                    lastEmitted = foods
+//                    onIngredients(foods)
 //                }
 //            }
-//            .addOnFailureListener { e -> Log.e("IngredientAnalyzer", "ML error", e) }
-//            .addOnCompleteListener { imageProxy.close() }
+//            .addOnFailureListener { e ->
+//                Log.e("IngredientAnalyzer", "ML error", e)
+//            }
+//            .addOnCompleteListener {
+//                imageProxy.close()
+//            }
 //    }
 //
 //    companion object {
-//        // Cheap heuristics to filter to likely foods
-//        private val FOOD_HINTS = listOf("soda","chocolate bar","apple","banana","tomato","potato","carrot","onion","bread","milk","egg","cheese",
-//            "lettuce","spinach","cucumber","pepper","pasta","noodle","rice","meat","chicken","beef","fish","yogurt","butter", "ketchup","coffee", "drink")
-//        private val FOOD_WHITELIST = FOOD_HINTS.toSet()
+//
+//        // Words that clearly indicate environment / non-food
+//        private val NON_FOOD_BLACKLIST = setOf(
+//            "room", "tile", "wall", "floor", "ceiling", "space",
+//            "shelf", "furniture", "chair", "table", "sofa", "window",
+//            "building", "lamp", "picture", "frame"
+//        )
+//
+//        // Core food tokens (ingredients / food items)
+//        private val FOOD_KEYWORDS = setOf(
+//            // fruit
+//            "apple","banana","orange","grape","berry","strawberry","blueberry",
+//            "lemon","lime","mango","pineapple",
+//
+//            // veg
+//            "tomato","potato","carrot","onion","garlic","pepper","broccoli","lettuce",
+//            "spinach","cabbage","cucumber","zucchini","corn","mushroom","pepperoni",
+//
+//            // grains / carbs
+//            "bread","toast","bagel","bun","sandwich","pizza","pasta","spaghetti",
+//            "noodle","rice","tortilla","wrap","burger","cereal","oatmeal",
+//
+//            // protein / dairy
+//            "egg","omelette","omelet","cheese","butter","yogurt","milk","cream",
+//            "chicken","beef","pork","steak","fish","salmon","shrimp","meat","tofu",
+//
+//            // drinks
+//            "coffee","tea","juice","soda","cola","smoothie","water","milkshake",
+//
+//            // snacks / sweets
+//            "chocolate","cookie","cake","donut","biscuit","candy","snack","chip",
+//            "cracker","brownie","ice cream","dessert"
+//        )
+//
+//        // Context words that often appear in food labels
+////        private val FOOD_CONTEXT_WORDS = setOf(
+////            "food","dish","meal","snack","breakfast","lunch","dinner","cuisine",
+////            "sauce","salad","soup","plate","bowl"
+////        )
+//
+//        /**
+//         * Make labels more "ingredient-like":
+//         *  - remove common plurals ("tomatoes" -> "tomato")
+//         *  - trim extra words when there's a clear food token
+//         */
+//        private fun normalizeLabel(label: String): String {
+//            var s = label.trim()
+//
+//            // If the label contains a known food token, return just that token
+//            val tokenMatch = FOOD_KEYWORDS.firstOrNull { s.contains(it) }
+//            if (tokenMatch != null) return tokenMatch
+//
+//            // Simple plural handling
+//            s = when {
+//                s.endsWith("ies") && s.length > 3 ->
+//                    s.dropLast(3) + "y" // berries -> berry
+//                s.endsWith("es") && s.length > 3 ->
+//                    s.dropLast(2)       // tomatoes -> tomato
+//                s.endsWith("s") && s.length > 3 ->
+//                    s.dropLast(1)       // eggs -> egg
+//                else -> s
+//            }
+//
+//            return s
+//        }
+//
+//        fun looksLikeFood(label: String): Boolean {
+//            val l = label.lowercase()
+//
+//            // Immediately reject obvious non-food environment words
+//            if (NON_FOOD_BLACKLIST.any { l.contains(it) }) return false
+//
+//            // Exact match or substring match against food keywords
+//            if (FOOD_KEYWORDS.any { l.contains(it) }) return true
+//
+//            // If it contains a food-ish context word AND is not obviously non-food,
+//            // treat it as food-ish (e.g., "bowl of soup", "plate of food")
+////            if (FOOD_CONTEXT_WORDS.any { l.contains(it) }) return true
+//
+//            return false
+//        }
 //    }
 //}
+
 
 package com.cs407.seefood.ml
 
@@ -78,12 +183,12 @@ import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 
 /**
- * Converts camera frames to ingredient-like labels using ML Kit Image Labeling.
- * Emits debounced results via onIngredients callback.
+ * IngredientAnalyzer
  *
- * This version:
- *  - lets ML Kit generate labels for anything
- *  - THEN filters down to only "food-ish" labels using a whitelist
+ * - Uses ML Kit's on-device image labeling.
+ * - Filters out obvious non-food / environment labels.
+ * - Keeps the top few "food-ish" labels and sends them to the UI.
+ * - User can still delete bad ones or add missing ones manually.
  */
 class IngredientAnalyzer(
     private val onIngredients: (List<String>) -> Unit
@@ -91,7 +196,7 @@ class IngredientAnalyzer(
 
     private val labeler = ImageLabeling.getClient(
         ImageLabelerOptions.Builder()
-            .setConfidenceThreshold(0.30f)
+            .setConfidenceThreshold(0.30f) // <-- keep this around 0.25–0.35
             .build()
     )
 
@@ -111,20 +216,30 @@ class IngredientAnalyzer(
 
         labeler.process(input)
             .addOnSuccessListener { labels ->
-                // All raw labels from ML Kit, normalized
-                val raw = labels
-                    .sortedByDescending { it.confidence }
-                    .map { it.text.lowercase().replace("_", " ") }
-                    .map { if (it.endsWith("s")) it.dropLast(1) else it }
+                if (labels.isEmpty()) {
+                    imageProxy.close()
+                    return@addOnSuccessListener
+                }
 
-                // Keep ONLY labels that look like food ingredients/items
-                val foods = raw
+                // Debug log so you can see what ML Kit is outputting
+                labels.forEach {
+                    Log.d("IngredientAnalyzer", "raw label=${it.text}, conf=${it.confidence}")
+                }
+
+                val normalized = labels
+                    .sortedByDescending { it.confidence }
+                    .map { it.text.lowercase().replace("_", " ").trim() }
+                    .map { normalizeLabel(it) }
+                    .filter { it.isNotBlank() }
+
+                // Remove obvious non-food context words
+                val foods = normalized
                     .filter { looksLikeFood(it) }
                     .distinct()
-                    .take(8) // no need to spam with a huge list
+                    .take(6)
 
                 if (foods.isEmpty()) {
-                    // No food detected in this frame → do nothing, keep previous list
+                    // no food-ish labels this frame → keep last list
                     return@addOnSuccessListener
                 }
 
@@ -132,7 +247,7 @@ class IngredientAnalyzer(
                 val changed =
                     foods.size != lastEmitted.size || foods.any { it !in lastEmitted }
 
-                if ((frameCounter % 5 == 0) || changed) {
+                if (changed || frameCounter % 5 == 0) {
                     lastEmitted = foods
                     onIngredients(foods)
                 }
@@ -146,28 +261,68 @@ class IngredientAnalyzer(
     }
 
     companion object {
-        // Very lightweight "is this food?" heuristic
-        private val FOOD_KEYWORDS = setOf(
-            "apple","banana","orange","grape","berry","strawberry","blueberry",
-            "tomato","potato","carrot","onion","garlic","pepper","broccoli","lettuce",
-            "spinach","cabbage","cucumber","zucchini","corn","mushroom",
 
-            "bread","toast","bagel","bun","sandwich","pizza","pasta","spaghetti",
-            "noodle","rice","tortilla","wrap","bun","burger",
-
-            "egg","omelette","cheese","butter","yogurt","milk","cream",
-
-            "chicken","beef","pork","steak","fish","salmon","shrimp","meat",
-
-            "coffee","tea","juice","soda","drink","smoothie","water bottle",
-
-            "chocolate","cookie","cake","donut","biscuit","candy","snack","cereal"
+        // Clearly non-food environmental words; we drop any label that contains one of these
+        private val NON_FOOD_BLACKLIST = setOf(
+            "room","tile","wall","floor","ceiling","space",
+            "shelf","furniture","chair","table","sofa","window",
+            "building","lamp","picture","frame","door","cabinet"
         )
 
+        // Words that usually refer to food / dishes (even if not specific ingredients)
+//        private val FOOD_CONTEXT = setOf(
+//            "food","dish","meal","snack","breakfast","lunch","dinner",
+//            "plate","bowl","cup","mug","bottle","glass","sauce","salad","soup"
+//        )
+
+        // Common ingredient tokens (helps us normalize multi-word labels)
+        private val FOOD_TOKENS = setOf(
+            "apple","banana","orange","grape","berry","strawberry","blueberry",
+            "lemon","lime","mango","pineapple",
+            "tomato","potato","carrot","onion","garlic","pepper","broccoli","lettuce",
+            "spinach","cabbage","cucumber","zucchini","corn","mushroom","pepperoni",
+            "bread","toast","bagel","bun","sandwich","pizza","pasta","spaghetti",
+            "noodle","rice","tortilla","wrap","burger","cereal","oatmeal",
+            "egg","omelette","omelet","cheese","butter","yogurt","milk","cream",
+            "chicken","beef","pork","steak","fish","salmon","shrimp","meat","tofu",
+            "coffee","tea","juice","soda","cola","smoothie","water","milkshake",
+            "chocolate","cookie","cake","donut","biscuit","candy","snack","chip",
+            "cracker","brownie","ice cream","dessert"
+        )
+
+        private fun normalizeLabel(label: String): String {
+            var s = label
+
+            // If the label contains a known food token (e.g. "slice of cheese"), keep that token
+            val token = FOOD_TOKENS.firstOrNull { s.contains(it) }
+            if (token != null) return token
+
+            // Simple plural handling
+            s = when {
+                s.endsWith("ies") && s.length > 3 -> s.dropLast(3) + "y" // berries -> berry
+                s.endsWith("es") && s.length > 3 -> s.dropLast(2)       // tomatoes -> tomato
+                s.endsWith("s")  && s.length > 3 -> s.dropLast(1)       // eggs -> egg
+                else -> s
+            }
+
+            return s
+        }
+
         fun looksLikeFood(label: String): Boolean {
-            // Exact or substring match against keyword list
-            if (label in FOOD_KEYWORDS) return true
-            return FOOD_KEYWORDS.any { kw -> label.contains(kw) }
+            val l = label.lowercase()
+
+            // Reject obvious environment
+            if (NON_FOOD_BLACKLIST.any { l.contains(it) }) return false
+
+            // If it contains an ingredient token, it's food
+            if (FOOD_TOKENS.any { l.contains(it) }) return true
+
+            // If it contains a generic "food context" word, treat as food-related
+//            if (FOOD_CONTEXT.any { l.contains(it) }) return true
+
+            return false
         }
     }
 }
+
+

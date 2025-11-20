@@ -242,7 +242,7 @@ fun ScanScreen(
                     .padding(start = 32.dp, top = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ingredients.take(5).forEach { name ->
+                ingredients.take(12).forEach { name ->
                     Text(
                         text = name.replaceFirstChar { it.uppercase() },
                         fontSize = 18.sp,
