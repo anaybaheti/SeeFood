@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("com.google.gms.google-services")   // <-- REQUIRED for Firebase
 }
 
 val localProps = Properties()
@@ -60,6 +61,15 @@ android {
 }
 
 dependencies {
+    // ------------------------------------
+    // Firebase Auth (required)
+    // ------------------------------------
+    implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
+    implementation("com.google.firebase:firebase-auth")
+
+    // ------------------------------------
+    // Existing dependencies (unchanged)
+    // ------------------------------------
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -103,4 +113,3 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
-

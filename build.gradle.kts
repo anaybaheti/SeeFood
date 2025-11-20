@@ -1,4 +1,5 @@
 // build.gradle.kts (Project level)
+
 plugins {
     id("com.android.application") version "8.6.1" apply false
     id("org.jetbrains.kotlin.android") version "2.0.21" apply false
@@ -6,3 +7,9 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21" apply false
 }
 
+// This block is required for Firebase
+buildscript {
+    dependencies {
+        classpath("com.google.gms:google-services:4.4.1")
+    }
+}

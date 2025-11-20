@@ -16,12 +16,14 @@ fun SeeFoodNavHost(
 
     NavHost(navController = nav, startDestination = startDestination) {
 
-        composable(NavRoutes.Login) {
-            LoginScreen(onLogin = {
-                nav.navigate(NavRoutes.Home) {
-                    popUpTo(NavRoutes.Login) { inclusive = true }
+        composable(route = NavRoutes.Login) {
+            LoginScreen(
+                onLoginSuccess = {
+                    nav.navigate(NavRoutes.Home) {
+                        popUpTo(NavRoutes.Login) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
 
         composable(NavRoutes.Home) {
