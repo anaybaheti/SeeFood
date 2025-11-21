@@ -45,6 +45,16 @@ fun SeeFoodNavHost(
 
         composable(NavRoutes.Recipes) { RecipesScreen(vm = vm) }
         composable(NavRoutes.Nutrition) { NutritionScreen() }
-        composable(NavRoutes.Profile) { ProfileScreen() }
+
+        composable(NavRoutes.Profile) {
+            ProfileScreen(
+                onLogout = {
+                    nav.navigate(NavRoutes.Login) {
+                        popUpTo(NavRoutes.Home) { inclusive = true }
+                    }
+                }
+            )
+        }
+
     }
 }

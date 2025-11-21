@@ -90,7 +90,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(onLogout: () -> Unit ) {
 
     var remindersOn by remember { mutableStateOf(true) }
     var darkModeOn by remember { mutableStateOf(false) }
@@ -243,15 +243,16 @@ fun ProfileScreen() {
 
             Spacer(Modifier.height(8.dp))
 
-            // Logout button
             OutlinedButton(
-                onClick = { /* TODO: handle logout */ },
+                onClick = onLogout,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(999.dp),
                 border = ButtonDefaults.outlinedButtonBorder.copy(
-                    brush = Brush.linearGradient(listOf(Color(0xFFEF4444), Color(0xFFEF4444)))
+                    brush = Brush.linearGradient(
+                        listOf(Color(0xFFEF4444), Color(0xFFEF4444))
+                    )
                 ),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Color(0xFFEF4444)
