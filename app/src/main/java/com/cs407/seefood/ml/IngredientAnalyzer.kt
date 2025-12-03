@@ -196,7 +196,7 @@ class IngredientAnalyzer(
 
     private val labeler = ImageLabeling.getClient(
         ImageLabelerOptions.Builder()
-            .setConfidenceThreshold(0.30f) // <-- keep this around 0.25–0.35
+            .setConfidenceThreshold(0.30f) // keep this around 0.25–0.35
             .build()
     )
 
