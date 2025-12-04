@@ -1,18 +1,3 @@
-//// app/src/main/java/com/cs407/seefood/data/SeeFoodRepository.kt
-//package com.cs407.seefood.data
-//
-//import com.cs407.seefood.BuildConfig
-//import com.cs407.seefood.network.Recipe
-//
-//class SeeFoodRepository {
-//    private val apiKey: String = BuildConfig.OPENAI_API_KEY
-//    private val llm = LlmRecipeClient(apiKey)
-//
-//    suspend fun suggestRecipesFrom(ingredients: List<String>): List<Recipe> {
-//        return llm.suggest(ingredients)
-//    }
-//}
-
 package com.cs407.seefood.data
 
 import android.util.Log

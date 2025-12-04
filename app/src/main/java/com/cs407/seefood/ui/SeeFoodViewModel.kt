@@ -1,6 +1,9 @@
 package com.cs407.seefood.ui
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.cs407.seefood.data.SeeFoodRepository
@@ -13,7 +16,30 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repo = SeeFoodRepository()
 
-    // ----- STATE -----
+    // ----- USER PROFILE STATE (NEW) -----
+
+    var firstName by mutableStateOf<String?>(null)
+        private set
+
+    var lastName by mutableStateOf<String?>(null)
+        private set
+
+    var email by mutableStateOf<String?>(null)
+        private set
+
+    fun setUserProfile(first: String, last: String, mail: String) {
+        firstName = first
+        lastName = last
+        email = mail
+    }
+
+    fun clearUserProfile() {
+        firstName = null
+        lastName = null
+        email = null
+    }
+
+    // ----- INGREDIENTS / RECIPES STATE -----
 
     private val _ingredients = MutableStateFlow(emptyList<String>())
     val ingredients: StateFlow<List<String>> = _ingredients
@@ -24,10 +50,11 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     private val _scanning = MutableStateFlow(true)
     val scanning: StateFlow<Boolean> = _scanning
 
-    // 👇 THIS is where "recipes" is initialized — as an empty List<Recipe>
+    // Current recipes
     private val _current = MutableStateFlow(emptyList<Recipe>())
     val current: StateFlow<List<Recipe>> = _current
 
+    // History of recipe batches
     private val _history = MutableStateFlow(emptyList<List<Recipe>>())
     val history: StateFlow<List<List<Recipe>>> = _history
 
@@ -41,13 +68,17 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     fun onScanUpdate(newOnes: List<String>) {
         if (newOnes.isEmpty()) return
         val merged = (_ingredients.value + newOnes)
-            .map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
         _ingredients.value = merged
         _selected.value = merged.toSet()
     }
 
     fun toggleIngredient(name: String) {
-        _selected.value = _selected.value.let { s -> if (name in s) s - name else s + name }
+        _selected.value = _selected.value.let { s ->
+            if (name in s) s - name else s + name
+        }
     }
 
     fun addManual(name: String) {
@@ -59,7 +90,10 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setIngredients(list: List<String>) {
-        val clean = list.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val clean = list
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
         _ingredients.value = clean
         _selected.value = clean.toSet()
     }
@@ -73,7 +107,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             _loading.value = true
             try {
                 val result: List<Recipe> = repo.suggestRecipesFrom(use)
-                _current.value = result                        // update current
+                _current.value = result                         // update current
                 _history.value = listOf(result) + _history.value // prepend to history
             } finally {
                 _loading.value = false
@@ -81,49 +115,3 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 }
-
-
-//package com.cs407.seefood.ui
-//
-//import androidx.lifecycle.ViewModel
-//import androidx.lifecycle.viewModelScope
-//import com.cs407.seefood.data.SeeFoodRepository
-//import com.cs407.seefood.network.Recipe
-//import kotlinx.coroutines.flow.MutableStateFlow
-//import kotlinx.coroutines.flow.StateFlow
-//import kotlinx.coroutines.launch
-//
-//class SeeFoodViewModel : ViewModel() {
-//    private val repo = SeeFoodRepository()
-//
-//    private val _ingredients = MutableStateFlow<List<String>>(emptyList())
-//    val ingredients: StateFlow<List<String>> = _ingredients
-//
-//    private val _recipes = MutableStateFlow<List<Recipe>>(emptyList())
-//    val recipes: StateFlow<List<Recipe>> = _recipes
-//
-//    private val _loading = MutableStateFlow(false)
-//    val loading: StateFlow<Boolean> = _loading
-//
-//    fun onScanUpdate(list: List<String>) { _ingredients.value = list }
-//
-//    fun addManual(ing: String) {
-//        if (ing.isNotBlank()) _ingredients.value = _ingredients.value + ing.trim()
-//    }
-//
-//    fun generateRecipes(onDone: (() -> Unit)? = null) {
-//        if (_loading.value) return
-//        viewModelScope.launch {
-//            _loading.value = true
-//            try {
-//                val out = repo.suggestRecipesFrom(_ingredients.value)
-//                _recipes.value = out
-//            } catch (_: Throwable) {
-//                // Should never hit because repo/client swallow, but keep guard
-//            } finally {
-//                _loading.value = false
-//                onDone?.invoke()
-//            }
-//        }
-//    }
-//}

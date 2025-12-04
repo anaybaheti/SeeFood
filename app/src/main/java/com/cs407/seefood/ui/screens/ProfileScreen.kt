@@ -1,85 +1,32 @@
-//package com.cs407.seefood.ui.screens
-//
-//import androidx.compose.foundation.background
-//import androidx.compose.foundation.layout.*
-//import androidx.compose.foundation.shape.CircleShape
-//import androidx.compose.material3.*
-//import androidx.compose.runtime.*
-//import androidx.compose.ui.Alignment
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.draw.clip
-//import androidx.compose.ui.text.font.FontWeight
-//import androidx.compose.ui.unit.dp
-//
-//@Composable
-//fun ProfileScreen() {
-//    var notificationsEnabled by remember { mutableStateOf(true) }
-//    var remindersEnabled by remember { mutableStateOf(false) }
-//
-//    Column(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp),
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.spacedBy(20.dp)
-//    ) {
-//        Box(
-//            modifier = Modifier
-//                .size(100.dp)
-//                .clip(CircleShape)
-//                .background(MaterialTheme.colorScheme.surfaceVariant),
-//            contentAlignment = Alignment.Center
-//        ) { Text("AB", style = MaterialTheme.typography.headlineMedium) }
-//
-//        Text(
-//            "Anay Baheti",
-//            style = MaterialTheme.typography.headlineSmall,
-//            fontWeight = FontWeight.Bold
-//        )
-//        Text("SeeFood Member • Joined 2025", style = MaterialTheme.typography.bodyMedium)
-//
-//        HorizontalDivider(Modifier.padding(vertical = 12.dp))
-//
-//        Row(
-//            Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.SpaceBetween,
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            Text("Notifications")
-//            Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
-//        }
-//
-//        Row(
-//            Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.SpaceBetween,
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            Text("Daily Meal Reminders")
-//            Switch(checked = remindersEnabled, onCheckedChange = { remindersEnabled = it })
-//        }
-//
-//        HorizontalDivider(Modifier.padding(vertical = 12.dp))
-//
-//        Button(
-//            onClick = { /* TODO: open saved recipes */ },
-//            modifier = Modifier.fillMaxWidth()
-//        ) { Text("View Saved Recipes") }
-//
-//        OutlinedButton(
-//            onClick = { /* TODO: logout */ },
-//            modifier = Modifier.fillMaxWidth()
-//        ) { Text("Logout") }
-//    }
-//}
-
 package com.cs407.seefood.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,14 +37,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun ProfileScreen(onLogout: () -> Unit ) {
-
+fun ProfileScreen(
+    firstName: String,
+    lastName: String,
+    email: String,
+    onLogout: () -> Unit
+) {
     var remindersOn by remember { mutableStateOf(true) }
     var darkModeOn by remember { mutableStateOf(false) }
 
     val brandGreen = Color(0xFF00C27A)
     val lightTop = Color(0xFFE8FFF5)
     val textDark = Color(0xFF111827)
+
+    // Derive initials, e.g. "Alex Johnson" -> "AJ"
+    val initials = remember(firstName, lastName) {
+        val f = firstName.trim().takeIf { it.isNotEmpty() }?.firstOrNull()?.uppercase()
+        val l = lastName.trim().takeIf { it.isNotEmpty() }?.firstOrNull()?.uppercase()
+        when {
+            f != null && l != null -> "$f$l"
+            f != null -> f.toString()
+            l != null -> l.toString()
+            else -> "?"
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -145,7 +108,7 @@ fun ProfileScreen(onLogout: () -> Unit ) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "A",
+                            text = initials,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF4B5563)
@@ -156,13 +119,13 @@ fun ProfileScreen(onLogout: () -> Unit ) {
 
                     Column {
                         Text(
-                            text = "Alex Johnson",
+                            text = "${firstName.trim()} ${lastName.trim()}".trim(),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = textDark
                         )
                         Text(
-                            text = "alex@example.com",
+                            text = email,
                             fontSize = 13.sp,
                             color = Color(0xFF6B7280)
                         )
@@ -320,3 +283,5 @@ private fun SettingRow(
         )
     }
 }
+
+
