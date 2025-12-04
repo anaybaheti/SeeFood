@@ -18,11 +18,11 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repo = SeeFoodRepository()
 
-    // ---------- FIRESTORE (points to database ID "seefood1") ----------
+    //  FIRESTORE (points to database ID "seefood1")
     private val db: FirebaseFirestore =
         FirebaseFirestore.getInstance(FirebaseApp.getInstance(), "seefood1")
 
-    // ---------- USER PROFILE STATE ----------
+    //  USER PROFILE STATE
 
     var firstName by mutableStateOf<String?>(null)
         private set
@@ -112,7 +112,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             }
     }
 
-    // ---------- INGREDIENTS / RECIPES STATE ----------
+    //  INGREDIENTS / RECIPES STATE
 
     private val _ingredients = MutableStateFlow(emptyList<String>())
     val ingredients: StateFlow<List<String>> = _ingredients
@@ -138,7 +138,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
-    // ---------- ACTIONS ----------
+    //  ACTIONS
 
     private fun loadSavedRecipesForEmail(mail: String) {
         if (mail.isBlank()) return
