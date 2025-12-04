@@ -7,6 +7,7 @@ object NavRoutes {
     const val Home = "home"         // dashboard
     const val Scan = "scan"         // camera screen
     const val Confirm = "confirm"   // ✅ add this
+    const val SavedRecipes = "saved_recipes"
     const val Recipes = "recipes"
     const val Nutrition = "nutrition"
     const val Profile = "profile"

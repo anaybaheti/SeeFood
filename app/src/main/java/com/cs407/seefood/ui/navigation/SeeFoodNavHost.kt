@@ -13,6 +13,7 @@ import com.cs407.seefood.ui.screens.ProfileScreen
 import com.cs407.seefood.ui.screens.RecipesScreen
 import com.cs407.seefood.ui.screens.ScanScreen
 import com.cs407.seefood.ui.screens.SignupScreen
+import com.cs407.seefood.ui.screens.SavedRecipesScreen
 
 @Composable
 fun SeeFoodNavHost(
@@ -84,7 +85,7 @@ fun SeeFoodNavHost(
             HomeScreen(
                 firstName = vm.firstName.orEmpty(),   // <- make non-null
                 onScan = { nav.navigate(NavRoutes.Scan) },
-                onRecipes = { nav.navigate(NavRoutes.Recipes) },
+                onRecipes = { nav.navigate(NavRoutes.SavedRecipes) },
                 onNutrition = { nav.navigate(NavRoutes.Nutrition) },
                 onProfile = { nav.navigate(NavRoutes.Profile) }
             )
@@ -109,6 +110,11 @@ fun SeeFoodNavHost(
         // RECIPES
         composable(route = NavRoutes.Recipes) {
             RecipesScreen(vm = vm)
+        }
+
+        // SAVED RECIPES (from Home → bottom bar)
+        composable(route = NavRoutes.SavedRecipes) {
+            SavedRecipesScreen(vm = vm)
         }
 
         // NUTRITION

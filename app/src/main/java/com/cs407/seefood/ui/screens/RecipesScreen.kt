@@ -466,6 +466,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.seefood.network.Recipe
 import com.cs407.seefood.ui.SeeFoodViewModel
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 
 @Composable
 fun RecipesScreen(vm: SeeFoodViewModel) {
@@ -525,7 +527,11 @@ fun RecipesScreen(vm: SeeFoodViewModel) {
                     contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)
                 ) {
                     items(recipes) { recipe ->
-                        RecipeCard(recipe = recipe, brandGreen = brandGreen)
+                        RecipeCard(
+                            recipe = recipe,
+                            brandGreen = brandGreen,
+                            onSave = { vm.saveRecipeForCurrentUser(recipe) }
+                        )
                     }
                 }
             }
@@ -534,7 +540,11 @@ fun RecipesScreen(vm: SeeFoodViewModel) {
 }
 
 @Composable
-private fun RecipeCard(recipe: Recipe, brandGreen: Color) {
+private fun RecipeCard(
+    recipe: Recipe,
+    brandGreen: Color,
+    onSave: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -590,6 +600,44 @@ private fun RecipeCard(recipe: Recipe, brandGreen: Color) {
                     color = Color(0xFF4B5563)
                 )
             }
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "Steps",
+                style = MaterialTheme.typography.labelMedium,
+                color = brandGreen
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            recipe.steps.forEachIndexed { index, step ->
+                Text(
+                    text = "${index + 1}. $step",
+                    fontSize = 14.sp,
+                    color = Color(0xFF4B5563)
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = onSave,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+                shape = RoundedCornerShape(999.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = brandGreen,
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "Save Recipe",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
         }
     }
 }

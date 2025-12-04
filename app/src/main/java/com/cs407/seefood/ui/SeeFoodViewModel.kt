@@ -33,10 +33,13 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     var email by mutableStateOf<String?>(null)
         private set
 
+
     fun setUserProfile(first: String, last: String, mail: String) {
         firstName = first
         lastName = last
         email = mail
+
+        loadSavedRecipesForEmail(mail)
     }
 
     fun clearUserProfile() {
@@ -128,10 +131,97 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     private val _history = MutableStateFlow(emptyList<List<Recipe>>())
     val history: StateFlow<List<List<Recipe>>> = _history
 
+    // saved recipes for this user (persisted in Firestore)
+    private val _savedRecipes = MutableStateFlow<List<Recipe>>(emptyList())
+    val savedRecipes: StateFlow<List<Recipe>> = _savedRecipes
+
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
     // ---------- ACTIONS ----------
+
+    private fun loadSavedRecipesForEmail(mail: String) {
+        if (mail.isBlank()) return
+
+        db.collection("savedRecipes")
+            .document(mail)
+            .collection("items")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val list = snapshot.documents.mapNotNull { doc ->
+                    val id = doc.getString("id") ?: doc.id
+                    val title = doc.getString("title") ?: return@mapNotNull null
+                    val imageUrl = doc.getString("imageUrl")
+                    @Suppress("UNCHECKED_CAST")
+                    val ingredients = (doc.get("ingredients") as? List<*>)?.filterIsInstance<String>()
+                        ?: emptyList()
+                    @Suppress("UNCHECKED_CAST")
+                    val steps = (doc.get("steps") as? List<*>)?.filterIsInstance<String>()
+                        ?: emptyList()
+
+                    Recipe(
+                        id = id,
+                        title = title,
+                        imageUrl = imageUrl,
+                        ingredients = ingredients,
+                        steps = steps
+                    )
+                }
+                _savedRecipes.value = list
+            }
+            .addOnFailureListener { e ->
+                e.printStackTrace()
+            }
+    }
+
+    fun refreshSavedRecipes() {
+        val mail = email ?: return
+        loadSavedRecipesForEmail(mail)
+    }
+
+    private fun recipeDocId(recipe: Recipe): String =
+        if (recipe.id.isNotBlank()) recipe.id else recipe.title
+
+    fun saveRecipeForCurrentUser(recipe: Recipe) {
+        val mail = email ?: return
+
+        // Avoid duplicates locally
+        if (_savedRecipes.value.any { it.id == recipe.id }) return
+        _savedRecipes.value = _savedRecipes.value + recipe
+
+        val data = hashMapOf(
+            "id" to recipe.id,
+            "title" to recipe.title,
+            "imageUrl" to recipe.imageUrl,
+            "ingredients" to recipe.ingredients,
+            "steps" to recipe.steps
+        )
+
+        db.collection("savedRecipes")
+            .document(mail)
+            .collection("items")
+            .document(recipeDocId(recipe))
+            .set(data)
+            .addOnFailureListener { e ->
+                e.printStackTrace()
+            }
+    }
+
+    fun removeSavedRecipe(recipe: Recipe) {
+        val mail = email ?: return
+
+        _savedRecipes.value = _savedRecipes.value.filterNot { it.id == recipe.id }
+
+        db.collection("savedRecipes")
+            .document(mail)
+            .collection("items")
+            .document(recipeDocId(recipe))
+            .delete()
+            .addOnFailureListener { e ->
+                e.printStackTrace()
+            }
+    }
+
 
     fun setScanning(on: Boolean) {
         _scanning.value = on
