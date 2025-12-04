@@ -1,23 +1,318 @@
+//package com.cs407.seefood.ui.screens
+//
+//import androidx.compose.foundation.background
+//import androidx.compose.foundation.border
+//import androidx.compose.foundation.layout.*
+//import androidx.compose.foundation.shape.RoundedCornerShape
+//import androidx.compose.material.icons.Icons
+//import androidx.compose.material.icons.automirrored.filled.Login
+//import androidx.compose.material.icons.filled.Visibility
+//import androidx.compose.material.icons.filled.VisibilityOff
+//import androidx.compose.material3.*
+//import androidx.compose.runtime.*
+//import androidx.compose.ui.Alignment
+//import androidx.compose.ui.Modifier
+//import androidx.compose.ui.graphics.Brush
+//import androidx.compose.ui.graphics.Color
+//import androidx.compose.ui.text.font.FontWeight
+//import androidx.compose.ui.text.input.PasswordVisualTransformation
+//import androidx.compose.ui.text.input.VisualTransformation
+//import androidx.compose.ui.text.style.TextAlign
+//import androidx.compose.ui.unit.dp
+//import androidx.compose.ui.unit.sp
+//import com.cs407.seefood.ui.SeeFoodViewModel
+//import com.google.firebase.auth.FirebaseAuth
+//import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+//import com.google.firebase.auth.FirebaseAuthInvalidUserException
+//import com.cs407.seefood.data.UserProfile
+//import com.google.firebase.firestore.ktx.firestore
+//import com.google.firebase.ktx.Firebase
+//@Composable
+//fun LoginScreen(
+//    vm: SeeFoodViewModel,
+//    onLoginSuccess: () -> Unit,
+//    onSignupClick: () -> Unit
+//) {
+//    val brandGreen = Color(0xFF00C27A)
+//    val lightTop = Color(0xFFE8FFF5)
+//
+//    val auth = FirebaseAuth.getInstance()
+//
+//    var email by remember { mutableStateOf("") }
+//    var password by remember { mutableStateOf("") }
+//
+//    var emailError by remember { mutableStateOf<String?>(null) }
+//    var passwordError by remember { mutableStateOf<String?>(null) }
+//    var generalError by remember { mutableStateOf<String?>(null) }
+//
+//    var isPasswordVisible by remember { mutableStateOf(false) }
+//    var isLoading by remember { mutableStateOf(false) }
+//
+//    var loginAllowed by remember { mutableStateOf(true) }
+//
+//    fun validateEmail(input: String): String? =
+//        when {
+//            input.isBlank() -> "Email is required."
+//            !android.util.Patterns.EMAIL_ADDRESS.matcher(input).matches() -> "Invalid email format."
+//            else -> null
+//        }
+//
+//    fun validatePassword(pw: String): String? =
+//        if (pw.isBlank()) "Password is required." else null
+//
+//    val allValid =
+//        emailError == null &&
+//                passwordError == null &&
+//                email.isNotEmpty() &&
+//                password.isNotEmpty()
+//
+//    Box(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(Brush.verticalGradient(listOf(lightTop, Color.White)))
+//            .padding(horizontal = 24.dp, vertical = 32.dp)
+//    ) {
+//        // Branding
+//        Column(
+//            modifier = Modifier
+//                .align(Alignment.TopCenter)
+//                .padding(top = 60.dp),
+//            horizontalAlignment = Alignment.CenterHorizontally
+//        ) {
+//            val logoShape = RoundedCornerShape(28.dp)
+//            Box(
+//                modifier = Modifier
+//                    .size(96.dp)
+//                    .background(Color.White, logoShape)
+//                    .border(4.dp, brandGreen, logoShape),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Box(
+//                    modifier = Modifier
+//                        .height(40.dp)
+//                        .width(8.dp)
+//                        .background(brandGreen, RoundedCornerShape(4.dp))
+//                )
+//            }
+//
+//            Spacer(Modifier.height(24.dp))
+//
+//            Text("SeeFood", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, color = brandGreen)
+//            Text("Scan • Cook • Track", fontSize = 14.sp, color = Color(0xFF4F4F4F))
+//        }
+//
+//        // Inputs (email + password)
+//        Column(
+//            modifier = Modifier
+//                .align(Alignment.Center)
+//                .fillMaxWidth(),
+//            horizontalAlignment = Alignment.CenterHorizontally
+//        ) {
+//            OutlinedTextField(
+//                value = email,
+//                onValueChange = {
+//                    email = it
+//                    emailError = validateEmail(email)
+//                    generalError = null
+//                },
+//                isError = emailError != null,
+//                label = { Text("Email") },
+//                modifier = Modifier.fillMaxWidth(),
+//                singleLine = true
+//            )
+//            emailError?.let {
+//                Text(
+//                    it,
+//                    color = Color.Red,
+//                    fontSize = 13.sp,
+//                    modifier = Modifier.align(Alignment.Start)
+//                )
+//            }
+//
+//            Spacer(Modifier.height(16.dp))
+//
+//            OutlinedTextField(
+//                value = password,
+//                onValueChange = {
+//                    password = it
+//                    passwordError = validatePassword(password)
+//                    generalError = null
+//                },
+//                label = { Text("Password") },
+//                isError = passwordError != null,
+//                modifier = Modifier.fillMaxWidth(),
+//                singleLine = true,
+//                visualTransformation = if (isPasswordVisible)
+//                    VisualTransformation.None
+//                else
+//                    PasswordVisualTransformation(),
+//                trailingIcon = {
+//                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+//                        Icon(
+//                            if (isPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+//                            contentDescription = "Toggle Password"
+//                        )
+//                    }
+//                }
+//            )
+//            passwordError?.let {
+//                Text(
+//                    it,
+//                    color = Color.Red,
+//                    fontSize = 13.sp,
+//                    modifier = Modifier.align(Alignment.Start)
+//                )
+//            }
+//
+//            generalError?.let {
+//                Spacer(Modifier.height(16.dp))
+//                Text(it, color = Color.Red, fontSize = 14.sp)
+//            }
+//        }
+//
+//        // Bottom: Login button + link to Sign Up
+//        Column(
+//            modifier = Modifier
+//                .align(Alignment.BottomCenter)
+//                .fillMaxWidth()
+//        ) {
+//            OutlinedButton(
+//                enabled = allValid && loginAllowed && !isLoading,
+//                onClick = {
+//                    isLoading = true
+//                    generalError = null
+//
+//                            // DB
+////                    auth.signInWithEmailAndPassword(email, password)
+////                        .addOnSuccessListener { result ->
+////                            isLoading = false
+////
+////                            // we only know email here; name might be set later or remain null
+////                            vm.setUserProfile(
+////                                first = vm.firstName ?: "",
+////                                last = vm.lastName ?: "",
+////                                mail = result.user?.email ?: email
+////                            )
+////
+////                            onLoginSuccess()
+////                        }
+//
+//                    auth.signInWithEmailAndPassword(email.trim(), password)
+//                        .addOnSuccessListener { result ->
+//                            val uid = result.user?.uid
+//                            if (uid == null) {
+//                                isLoading = false
+//                                generalError = "No user id returned."
+//                                return@addOnSuccessListener
+//                            }
+//
+//                            val db = Firebase.firestore
+//                            db.collection("users")
+//                                .document(uid)
+//                                .get()
+//                                .addOnSuccessListener { snap ->
+//                                    val profile = snap.toObject(UserProfile::class.java)
+//
+//                                    vm.setUserProfile(
+//                                        fn = profile?.firstName ?: "",
+//                                        ln = profile?.lastName  ?: "",
+//                                        em = profile?.email     ?: email.trim()
+//                                    )
+//
+//                                    isLoading = false
+//                                    onLoginSuccess()
+//                                }
+//                                .addOnFailureListener { e ->
+//                                    isLoading = false
+//                                    generalError = e.localizedMessage ?: "Failed to load profile."
+//                                }
+//                        }
+//
+//                            // DB
+//                        .addOnFailureListener { e ->
+//                            isLoading = false
+//                            when (e) {
+//                                is FirebaseAuthInvalidUserException -> {
+//                                    loginAllowed = true // still allow; just show message
+//                                    generalError = "Account not found. Please sign up."
+//                                }
+//                                is FirebaseAuthInvalidCredentialsException -> {
+//                                    generalError = "Incorrect password."
+//                                }
+//                                else -> generalError = e.localizedMessage ?: "Login failed."
+//                            }
+//                        }
+//                },
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(52.dp),
+//                shape = RoundedCornerShape(999.dp),
+//                colors = ButtonDefaults.outlinedButtonColors(
+//                    contentColor = if (loginAllowed) brandGreen else Color.Gray
+//                )
+//            ) {
+//                if (isLoading) {
+//                    CircularProgressIndicator(
+//                        strokeWidth = 2.dp,
+//                        color = brandGreen,
+//                        modifier = Modifier.size(22.dp)
+//                    )
+//                } else {
+//                    Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
+//                    Spacer(Modifier.width(8.dp))
+//                    Text("Login")
+//                }
+//            }
+//
+//            Spacer(Modifier.height(12.dp))
+//
+//            TextButton(
+//                onClick = onSignupClick,
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Text(
+//                    "Don't have an account? Sign up",
+//                    textAlign = TextAlign.Center,
+//                    color = brandGreen
+//                )
+//            }
+//        }
+//    }
+//}
+//
+
 package com.cs407.seefood.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.seefood.ui.SeeFoodViewModel
@@ -29,7 +324,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 fun LoginScreen(
     vm: SeeFoodViewModel,
     onLoginSuccess: () -> Unit,
-    onSignupClick: () -> Unit
+    onGoToSignup: () -> Unit
 ) {
     val brandGreen = Color(0xFF00C27A)
     val lightTop = Color(0xFFE8FFF5)
@@ -46,23 +341,23 @@ fun LoginScreen(
     var isPasswordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    var loginAllowed by remember { mutableStateOf(true) }
-
-    fun validateEmail(input: String): String? =
-        when {
+    fun validateEmail(input: String): String? {
+        return when {
             input.isBlank() -> "Email is required."
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(input).matches() -> "Invalid email format."
+            !android.util.Patterns.EMAIL_ADDRESS.matcher(input).matches() ->
+                "Invalid email format."
             else -> null
         }
+    }
 
-    fun validatePassword(pw: String): String? =
-        if (pw.isBlank()) "Password is required." else null
+    fun validatePassword(pw: String): String? {
+        return if (pw.isBlank()) "Password is required." else null
+    }
 
-    val allValid =
-        emailError == null &&
-                passwordError == null &&
-                email.isNotEmpty() &&
-                password.isNotEmpty()
+    val allValid = emailError == null &&
+            passwordError == null &&
+            email.isNotEmpty() &&
+            password.isNotEmpty()
 
     Box(
         modifier = Modifier
@@ -70,7 +365,8 @@ fun LoginScreen(
             .background(Brush.verticalGradient(listOf(lightTop, Color.White)))
             .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
-        // Branding
+
+        // Logo + title
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -95,17 +391,28 @@ fun LoginScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            Text("SeeFood", fontSize = 28.sp, fontWeight = FontWeight.SemiBold, color = brandGreen)
-            Text("Scan • Cook • Track", fontSize = 14.sp, color = Color(0xFF4F4F4F))
+            Text(
+                "SeeFood",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = brandGreen
+            )
+            Text(
+                "Scan • Cook • Track",
+                fontSize = 14.sp,
+                color = Color(0xFF4F4F4F)
+            )
         }
 
-        // Inputs (email + password)
+        // Center form
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            // EMAIL
             OutlinedTextField(
                 value = email,
                 onValueChange = {
@@ -116,7 +423,8 @@ fun LoginScreen(
                 isError = emailError != null,
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
             emailError?.let {
                 Text(
@@ -129,6 +437,7 @@ fun LoginScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            // PASSWORD
             OutlinedTextField(
                 value = password,
                 onValueChange = {
@@ -147,11 +456,15 @@ fun LoginScreen(
                 trailingIcon = {
                     IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                         Icon(
-                            if (isPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            contentDescription = "Toggle Password"
+                            imageVector = if (isPasswordVisible)
+                                Icons.Filled.VisibilityOff
+                            else
+                                Icons.Filled.Visibility,
+                            contentDescription = "Toggle password visibility"
                         )
                     }
-                }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
             passwordError?.let {
                 Text(
@@ -163,47 +476,55 @@ fun LoginScreen(
             }
 
             generalError?.let {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
                 Text(it, color = Color.Red, fontSize = 14.sp)
             }
         }
 
-        // Bottom: Login button + link to Sign Up
+        // Bottom buttons
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
         ) {
-            OutlinedButton(
-                enabled = allValid && loginAllowed && !isLoading,
+            // LOGIN
+            Button(
+                enabled = allValid && !isLoading,
                 onClick = {
                     isLoading = true
                     generalError = null
 
                     auth.signInWithEmailAndPassword(email, password)
                         .addOnSuccessListener { result ->
-                            isLoading = false
+                            val uid = result.user?.uid
+                            if (uid == null) {
+                                isLoading = false
+                                generalError = "Login failed: missing user id."
+                                return@addOnSuccessListener
+                            }
 
-                            // we only know email here; name might be set later or remain null
-                            vm.setUserProfile(
-                                first = vm.firstName ?: "",
-                                last = vm.lastName ?: "",
-                                mail = result.user?.email ?: email
-                            )
-
-                            onLoginSuccess()
+                            // Load profile via ViewModel (uses seefood1 DB)
+                            vm.loadUserProfileFromFirestore(uid) { ok ->
+                                isLoading = false
+                                if (ok) {
+                                    onLoginSuccess()
+                                } else {
+                                    // fallback: at least show email
+                                    val em = result.user?.email.orEmpty()
+                                    vm.setUserProfile("", "", em)
+                                    generalError = "Failed to load profile; using email only."
+                                    onLoginSuccess()
+                                }
+                            }
                         }
                         .addOnFailureListener { e ->
                             isLoading = false
-                            when (e) {
-                                is FirebaseAuthInvalidUserException -> {
-                                    loginAllowed = true // still allow; just show message
-                                    generalError = "Account not found. Please sign up."
-                                }
-                                is FirebaseAuthInvalidCredentialsException -> {
-                                    generalError = "Incorrect password."
-                                }
-                                else -> generalError = e.localizedMessage ?: "Login failed."
+                            generalError = when (e) {
+                                is FirebaseAuthInvalidUserException ->
+                                    "Account not found. Please sign up."
+                                is FirebaseAuthInvalidCredentialsException ->
+                                    "Incorrect password."
+                                else -> e.localizedMessage ?: "Login failed."
                             }
                         }
                 },
@@ -211,36 +532,38 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(999.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = if (loginAllowed) brandGreen else Color.Gray
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = brandGreen,
+                    contentColor = Color.White
                 )
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         strokeWidth = 2.dp,
-                        color = brandGreen,
+                        color = Color.White,
                         modifier = Modifier.size(22.dp)
                     )
                 } else {
                     Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Login")
+                    Text("Log In")
                 }
             }
 
             Spacer(Modifier.height(12.dp))
 
-            TextButton(
-                onClick = onSignupClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    "Don't have an account? Sign up",
-                    textAlign = TextAlign.Center,
-                    color = brandGreen
-                )
-            }
+            // GO TO SIGNUP
+            Text(
+                text = "Don't have an account? Sign up",
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .clickable(enabled = !isLoading) { onGoToSignup() }
+                    .padding(vertical = 8.dp),
+                color = brandGreen,
+                fontSize = 14.sp
+            )
         }
     }
 }
+
 

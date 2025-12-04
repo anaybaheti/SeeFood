@@ -26,7 +26,20 @@ fun SeeFoodNavHost(
         startDestination = startDestination
     ) {
         // LOGIN
-        composable(route = NavRoutes.Login) {
+//        composable(route = NavRoutes.Login) {
+//            LoginScreen(
+//                vm = vm,
+//                onLoginSuccess = {
+//                    nav.navigate(NavRoutes.Home) {
+//                        popUpTo(NavRoutes.Login) { inclusive = true }
+//                    }
+//                },
+//                onSignupClick = {
+//                    nav.navigate(NavRoutes.Signup)
+//                }
+//            )
+//        }
+        composable(NavRoutes.Login) {
             LoginScreen(
                 vm = vm,
                 onLoginSuccess = {
@@ -34,14 +47,27 @@ fun SeeFoodNavHost(
                         popUpTo(NavRoutes.Login) { inclusive = true }
                     }
                 },
-                onSignupClick = {
+                onGoToSignup = {
                     nav.navigate(NavRoutes.Signup)
                 }
             )
         }
 
         // SIGN UP
-        composable(route = NavRoutes.Signup) {
+//        composable(route = NavRoutes.Signup) {
+//            SignupScreen(
+//                vm = vm,
+//                onSignupSuccess = {
+//                    nav.navigate(NavRoutes.Home) {
+//                        popUpTo(NavRoutes.Login) { inclusive = true }
+//                    }
+//                },
+//                onLoginClick = {
+//                    nav.popBackStack() // back to Login
+//                }
+//            )
+//        }
+        composable(NavRoutes.Signup) {
             SignupScreen(
                 vm = vm,
                 onSignupSuccess = {
@@ -49,9 +75,7 @@ fun SeeFoodNavHost(
                         popUpTo(NavRoutes.Login) { inclusive = true }
                     }
                 },
-                onLoginClick = {
-                    nav.popBackStack() // back to Login
-                }
+                onBackToLogin = { nav.popBackStack() }
             )
         }
 

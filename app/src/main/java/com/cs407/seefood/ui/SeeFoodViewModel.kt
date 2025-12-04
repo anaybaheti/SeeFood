@@ -8,6 +8,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.cs407.seefood.data.SeeFoodRepository
 import com.cs407.seefood.network.Recipe
+import com.google.firebase.FirebaseApp
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -16,7 +18,11 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repo = SeeFoodRepository()
 
-    // ----- USER PROFILE STATE (NEW) -----
+    // ---------- FIRESTORE (points to database ID "seefood1") ----------
+    private val db: FirebaseFirestore =
+        FirebaseFirestore.getInstance(FirebaseApp.getInstance(), "seefood1")
+
+    // ---------- USER PROFILE STATE ----------
 
     var firstName by mutableStateOf<String?>(null)
         private set
@@ -39,7 +45,71 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
         email = null
     }
 
-    // ----- INGREDIENTS / RECIPES STATE -----
+    /**
+     * Save the user's profile into Firestore under:
+     *   users/{uid}
+     *
+     * Call this right after a successful SIGN-UP.
+     */
+    fun saveUserProfileToFirestore(
+        uid: String,
+        first: String,
+        last: String,
+        mail: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        val userMap = hashMapOf(
+            "firstName" to first,
+            "lastName" to last,
+            "email" to mail
+        )
+
+        db.collection("users")
+            .document(uid)
+            .set(userMap)
+            .addOnSuccessListener {
+                // also update local state
+                setUserProfile(first, last, mail)
+                onResult(true)
+            }
+            .addOnFailureListener { e ->
+                e.printStackTrace()
+                onResult(false)
+            }
+    }
+
+    /**
+     * Load the user's profile from Firestore:
+     *   users/{uid}
+     *
+     * Call this right after a successful LOGIN.
+     */
+    fun loadUserProfileFromFirestore(
+        uid: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        db.collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { snap ->
+                if (snap != null && snap.exists()) {
+                    val first = snap.getString("firstName") ?: ""
+                    val last = snap.getString("lastName") ?: ""
+                    val mail = snap.getString("email") ?: ""
+
+                    setUserProfile(first, last, mail)
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
+            }
+            .addOnFailureListener { e ->
+                e.printStackTrace()
+                onResult(false)
+            }
+    }
+
+    // ---------- INGREDIENTS / RECIPES STATE ----------
 
     private val _ingredients = MutableStateFlow(emptyList<String>())
     val ingredients: StateFlow<List<String>> = _ingredients
@@ -50,20 +120,22 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     private val _scanning = MutableStateFlow(true)
     val scanning: StateFlow<Boolean> = _scanning
 
-    // Current recipes
+    // current recipes
     private val _current = MutableStateFlow(emptyList<Recipe>())
     val current: StateFlow<List<Recipe>> = _current
 
-    // History of recipe batches
+    // history of recipe batches
     private val _history = MutableStateFlow(emptyList<List<Recipe>>())
     val history: StateFlow<List<List<Recipe>>> = _history
 
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
-    // ----- ACTIONS -----
+    // ---------- ACTIONS ----------
 
-    fun setScanning(on: Boolean) { _scanning.value = on }
+    fun setScanning(on: Boolean) {
+        _scanning.value = on
+    }
 
     fun onScanUpdate(newOnes: List<String>) {
         if (newOnes.isEmpty()) return
@@ -107,8 +179,8 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             _loading.value = true
             try {
                 val result: List<Recipe> = repo.suggestRecipesFrom(use)
-                _current.value = result                         // update current
-                _history.value = listOf(result) + _history.value // prepend to history
+                _current.value = result
+                _history.value = listOf(result) + _history.value
             } finally {
                 _loading.value = false
             }

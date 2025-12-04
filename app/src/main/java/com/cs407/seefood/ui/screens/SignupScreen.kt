@@ -2,12 +2,11 @@ package com.cs407.seefood.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -18,16 +17,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cs407.seefood.ui.SeeFoodViewModel
@@ -37,7 +39,7 @@ import com.google.firebase.auth.FirebaseAuth
 fun SignupScreen(
     vm: SeeFoodViewModel,
     onSignupSuccess: () -> Unit,
-    onLoginClick: () -> Unit
+    onBackToLogin: () -> Unit
 ) {
     val brandGreen = Color(0xFF00C27A)
     val lightTop = Color(0xFFE8FFF5)
@@ -49,12 +51,17 @@ fun SignupScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    var firstError by remember { mutableStateOf<String?>(null) }
+    var lastError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var generalError by remember { mutableStateOf<String?>(null) }
 
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+
+    fun validateName(name: String): String? =
+        if (name.isBlank()) "Required" else null
 
     fun validateEmail(input: String): String? {
         return when {
@@ -74,29 +81,25 @@ fun SignupScreen(
     }
 
     val allValid =
-        firstName.isNotBlank() &&
-                lastName.isNotBlank() &&
-                emailError == null &&
-                passwordError == null &&
-                email.isNotEmpty() &&
-                password.isNotEmpty()
+        firstError == null && lastError == null &&
+                emailError == null && passwordError == null &&
+                firstName.isNotBlank() && lastName.isNotBlank() &&
+                email.isNotBlank() && password.isNotBlank()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(lightTop, Color.White)))
+            .padding(horizontal = 24.dp, vertical = 32.dp)
     ) {
-        // Single scrollable column so nothing overlaps on small screens
+
+        // Top logo + text
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+                .align(Alignment.TopCenter)
+                .padding(top = 60.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(32.dp))
-
-            // LOGO
             val logoShape = RoundedCornerShape(28.dp)
             Box(
                 modifier = Modifier
@@ -113,49 +116,76 @@ fun SignupScreen(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
 
             Text(
-                text = "Create Account",
+                "Create Account",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = brandGreen
             )
             Text(
-                text = "Sign up to start using SeeFood",
+                "Sign up to start using SeeFood",
                 fontSize = 14.sp,
-                color = Color(0xFF4F4F4F),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
+                color = Color(0xFF4F4F4F)
             )
+        }
+
+        // Form
+        Column(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
             // FIRST NAME
             OutlinedTextField(
                 value = firstName,
                 onValueChange = {
                     firstName = it
+                    firstError = validateName(firstName)
                     generalError = null
                 },
+                isError = firstError != null,
                 label = { Text("First Name") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+            firstError?.let {
+                Text(
+                    it,
+                    color = Color.Red,
+                    fontSize = 13.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+            }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
 
             // LAST NAME
             OutlinedTextField(
                 value = lastName,
                 onValueChange = {
                     lastName = it
+                    lastError = validateName(lastName)
                     generalError = null
                 },
+                isError = lastError != null,
                 label = { Text("Last Name") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+            lastError?.let {
+                Text(
+                    it,
+                    color = Color.Red,
+                    fontSize = 13.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+            }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
 
             // EMAIL
             OutlinedTextField(
@@ -168,21 +198,19 @@ fun SignupScreen(
                 isError = emailError != null,
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
-
             emailError?.let {
                 Text(
-                    text = it,
+                    it,
                     color = Color.Red,
                     fontSize = 13.sp,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(top = 2.dp)
+                    modifier = Modifier.align(Alignment.Start)
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
 
             // PASSWORD
             OutlinedTextField(
@@ -210,48 +238,65 @@ fun SignupScreen(
                             contentDescription = "Toggle password visibility"
                         )
                     }
-                }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
-
             passwordError?.let {
                 Text(
-                    text = it,
+                    it,
                     color = Color.Red,
                     fontSize = 13.sp,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(top = 2.dp)
+                    modifier = Modifier.align(Alignment.Start)
                 )
             }
 
             generalError?.let {
-                Spacer(Modifier.height(16.dp))
-                Text(text = it, color = Color.Red, fontSize = 14.sp)
+                Spacer(Modifier.height(10.dp))
+                Text(it, color = Color.Red, fontSize = 14.sp)
             }
+        }
 
-            Spacer(Modifier.height(24.dp))
-
-            // SIGN UP BUTTON
+        // Bottom section
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+        ) {
+            // SIGN UP
             Button(
                 enabled = allValid && !isLoading,
                 onClick = {
                     isLoading = true
                     generalError = null
 
-                    auth.createUserWithEmailAndPassword(email.trim(), password)
-                        .addOnSuccessListener {
-                            // save profile into ViewModel
-                            vm.setUserProfile(
-                                first = firstName.trim(),
-                                last = lastName.trim(),
-                                mail = email.trim()
-                            )
-                            isLoading = false
-                            onSignupSuccess()
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnSuccessListener { result ->
+                            val uid = result.user?.uid
+                            if (uid == null) {
+                                isLoading = false
+                                generalError = "Sign up failed: missing user id."
+                                return@addOnSuccessListener
+                            }
+
+                            // Save profile through ViewModel (uses seefood1 DB)
+                            vm.saveUserProfileToFirestore(
+                                uid = uid,
+                                first = firstName,
+                                last = lastName,
+                                mail = email
+                            ) { ok ->
+                                isLoading = false
+                                if (ok) {
+                                    onSignupSuccess()
+                                } else {
+                                    generalError = "Failed to save profile."
+                                }
+                            }
                         }
                         .addOnFailureListener { e ->
                             isLoading = false
                             generalError = e.localizedMessage ?: "Sign up failed."
+                            android.util.Log.e("SignupScreen", "Auth signUp failed", e)
                         }
                 },
                 modifier = Modifier
@@ -278,15 +323,15 @@ fun SignupScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // LINK BACK TO LOGIN
-            TextButton(onClick = onLoginClick) {
-                Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
-                Spacer(Modifier.width(4.dp))
-                Text("Already have an account? Log in")
-            }
-
-            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Already have an account? Log in",
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .clickable(enabled = !isLoading) { onBackToLogin() }
+                    .padding(vertical = 8.dp),
+                color = brandGreen,
+                fontSize = 14.sp
+            )
         }
     }
 }
-
