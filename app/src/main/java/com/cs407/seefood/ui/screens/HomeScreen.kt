@@ -207,10 +207,13 @@ fun HomeScreen(
         BottomNavBar(
             modifier = Modifier.align(Alignment.BottomCenter),
             brandGreen = brandGreen,
+            current = BottomNavDestination.Home,
+            onHome = { /* already here */ },
             onRecipes = onRecipes,
             onNutrition = onNutrition,
             onProfile = onProfile
         )
+
     }
 }
 
@@ -286,15 +289,28 @@ private fun RecipeCard(
     }
 }
 
+enum class BottomNavDestination {
+    Home,
+    Recipes,
+    Nutrition,
+    Profile
+}
 @Composable
-private fun BottomNavBar(
+fun BottomNavBar(
     modifier: Modifier = Modifier,
     brandGreen: Color,
+    current: BottomNavDestination,
+    onHome: () -> Unit,
     onRecipes: () -> Unit,
     onNutrition: () -> Unit,
     onProfile: () -> Unit
 ) {
     val inactive = Color(0xFF9CA3AF)
+
+    val homeColor = if (current == BottomNavDestination.Home) brandGreen else inactive
+    val recipesColor = if (current == BottomNavDestination.Recipes) brandGreen else inactive
+    val nutritionColor = if (current == BottomNavDestination.Nutrition) brandGreen else inactive
+    val profileColor = if (current == BottomNavDestination.Profile) brandGreen else inactive
 
     Surface(
         modifier = modifier
@@ -310,37 +326,37 @@ private fun BottomNavBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // HOME (current tab – highlighted, no click)
             BottomNavItem(
                 icon = Icons.Filled.Home,
                 label = "Home",
-                color = brandGreen,
-                onClick = null // already on Home
+                color = homeColor,
+                onClick = onHome
             )
 
             BottomNavItem(
                 icon = Icons.Filled.MenuBook,
                 label = "Recipes",
-                color = inactive,
+                color = recipesColor,
                 onClick = onRecipes
             )
 
             BottomNavItem(
                 icon = Icons.Filled.BarChart,
                 label = "Nutrition",
-                color = inactive,
+                color = nutritionColor,
                 onClick = onNutrition
             )
 
             BottomNavItem(
                 icon = Icons.Filled.Person,
                 label = "Profile",
-                color = inactive,
+                color = profileColor,
                 onClick = onProfile
             )
         }
     }
 }
+
 
 @Composable
 private fun BottomNavItem(
