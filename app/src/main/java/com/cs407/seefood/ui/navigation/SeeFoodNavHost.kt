@@ -184,9 +184,11 @@ fun SeeFoodNavHost(
         composable(route = NavRoutes.Scan) {
             ScanScreen(
                 vm = vm,
-                onConfirm = { nav.navigate(NavRoutes.Confirm) }
+                onConfirm = { nav.navigate(NavRoutes.Confirm) },
+                onBack = { nav.navigate(NavRoutes.Home) }
             )
         }
+
 
         // CONFIRM INGREDIENTS
         composable(route = NavRoutes.Confirm) {

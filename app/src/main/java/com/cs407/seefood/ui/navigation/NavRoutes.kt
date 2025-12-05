@@ -4,9 +4,9 @@ object NavRoutes {
     const val Login = "login"
 
     const val Signup = "signup"
-    const val Home = "home"         // dashboard
-    const val Scan = "scan"         // camera screen
-    const val Confirm = "confirm"   // ✅ add this
+    const val Home = "home"
+    const val Scan = "scan"
+    const val Confirm = "confirm"
     const val SavedRecipes = "saved_recipes"
     const val Recipes = "recipes"
     const val Nutrition = "nutrition"

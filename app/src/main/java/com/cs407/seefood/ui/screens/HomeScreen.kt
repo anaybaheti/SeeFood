@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomeScreen(
-    firstName: String?,              // NEW: pass the logged in user's first name
+    firstName: String?,
     onScan: () -> Unit,
     onRecipes: () -> Unit,
     onNutrition: () -> Unit,
