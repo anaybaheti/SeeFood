@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Visibility
@@ -86,18 +88,18 @@ fun SignupScreen(
                 firstName.isNotBlank() && lastName.isNotBlank() &&
                 email.isNotBlank() && password.isNotBlank()
 
-    Box(
+    // ********* LAYOUT FIX: single scrollable Column *********
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(lightTop, Color.White)))
             .padding(horizontal = 24.dp, vertical = 32.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // Top logo + text
+        // Top logo + text (no overlap now)
         Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 60.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val logoShape = RoundedCornerShape(28.dp)
@@ -131,11 +133,11 @@ fun SignupScreen(
             )
         }
 
+        Spacer(Modifier.height(24.dp))
+
         // Form
         Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -256,13 +258,12 @@ fun SignupScreen(
             }
         }
 
-        // Bottom section
+        Spacer(Modifier.height(24.dp))
+
+        // Bottom section (button + link)
         Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // SIGN UP
             Button(
                 enabled = allValid && !isLoading,
                 onClick = {
@@ -335,3 +336,4 @@ fun SignupScreen(
         }
     }
 }
+

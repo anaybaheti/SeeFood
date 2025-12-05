@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cs407.seefood.ui.SeeFoodApp
 import com.cs407.seefood.ui.SeeFoodViewModel
 import com.cs407.seefood.ui.navigation.SeeFoodNavHost
 import com.cs407.seefood.ui.theme.SeeFoodTheme
@@ -20,7 +21,7 @@ class MainActivity : ComponentActivity() {
                 // Create ONE app-scoped VM here…
                 val vm: SeeFoodViewModel = viewModel(factory = factory)
                 // …and pass it down
-                SeeFoodNavHost(vm = vm)
+                SeeFoodApp(vm = vm)
             }
         }
     }
