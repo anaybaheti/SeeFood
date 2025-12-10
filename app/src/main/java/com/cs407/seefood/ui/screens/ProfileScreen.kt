@@ -59,7 +59,7 @@ fun ProfileScreen(
 ) {
     val goals by vm.dailyGoals.collectAsState()
     val remindersOn by vm.remindersEnabled.collectAsState()
-    val darkModeOn by vm.darkModeEnabled.collectAsState()
+//    val darkModeOn by vm.darkModeEnabled.collectAsState()
 
     var showEditGoals by remember { mutableStateOf(false) }
 
@@ -205,12 +205,12 @@ fun ProfileScreen(
                         onCheckedChange = { vm.setRemindersEnabled(it) },
                         brandGreen = brandGreen
                     )
-                    SettingRow(
-                        label = "Dark Mode",
-                        checked = darkModeOn,
-                        onCheckedChange = { vm.setDarkModeEnabled(it) },
-                        brandGreen = brandGreen
-                    )
+//                    SettingRow(
+//                        label = "Dark Mode",
+//                        checked = darkModeOn,
+//                        onCheckedChange = { vm.setDarkModeEnabled(it) },
+//                        brandGreen = brandGreen
+//                    )
                 }
             }
 
