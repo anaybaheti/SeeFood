@@ -1,6 +1,7 @@
 package com.cs407.seefood.ui
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,11 +9,24 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.cs407.seefood.data.SeeFoodRepository
 import com.cs407.seefood.network.Recipe
+import com.cs407.seefood.notifications.DailyReminderWorker
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
+
+// Simple model for the profile’s daily goals
+data class DailyGoals(
+    val calories: Int = 2000,
+    val proteinGrams: Int = 150,
+    val waterGlasses: Int = 8
+)
 
 class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -32,7 +46,6 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
 
     var email by mutableStateOf<String?>(null)
         private set
-
 
     fun setUserProfile(first: String, last: String, mail: String) {
         firstName = first
@@ -112,6 +125,67 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             }
     }
 
+    //  DAILY GOALS / SETTINGS STATE
+
+    private val _dailyGoals = MutableStateFlow(DailyGoals())
+    val dailyGoals: StateFlow<DailyGoals> = _dailyGoals
+
+    private val _remindersEnabled = MutableStateFlow(false)
+    val remindersEnabled: StateFlow<Boolean> = _remindersEnabled
+
+    private val _darkModeEnabled = MutableStateFlow(false)
+    val darkModeEnabled: StateFlow<Boolean> = _darkModeEnabled
+
+    fun updateDailyGoals(calories: Int, proteinGrams: Int, waterGlasses: Int) {
+        _dailyGoals.value = DailyGoals(calories, proteinGrams, waterGlasses)
+    }
+
+    fun setRemindersEnabled(enabled: Boolean) {
+        _remindersEnabled.value = enabled
+        val ctx = getApplication<Application>().applicationContext
+        if (enabled) {
+            scheduleDailyReminder(ctx)
+        } else {
+            cancelDailyReminder(ctx)
+        }
+    }
+
+    fun setDarkModeEnabled(enabled: Boolean) {
+        _darkModeEnabled.value = enabled
+    }
+
+    private fun scheduleDailyReminder(context: Context) {
+        val now = System.currentTimeMillis()
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, 12)   // 12:00 noon
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= now) {
+                // if noon already passed, schedule for tomorrow
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        val initialDelay = calendar.timeInMillis - now
+
+        val request =
+            PeriodicWorkRequestBuilder<DailyReminderWorker>(24, TimeUnit.HOURS)
+                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                .build()
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            DAILY_REMINDER_WORK_NAME,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request
+        )
+    }
+
+    private fun cancelDailyReminder(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(DAILY_REMINDER_WORK_NAME)
+    }
+
     //  INGREDIENTS / RECIPES STATE
 
     private val _ingredients = MutableStateFlow(emptyList<String>())
@@ -153,11 +227,13 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
                     val title = doc.getString("title") ?: return@mapNotNull null
                     val imageUrl = doc.getString("imageUrl")
                     @Suppress("UNCHECKED_CAST")
-                    val ingredients = (doc.get("ingredients") as? List<*>)?.filterIsInstance<String>()
-                        ?: emptyList()
+                    val ingredients =
+                        (doc.get("ingredients") as? List<*>)?.filterIsInstance<String>()
+                            ?: emptyList()
                     @Suppress("UNCHECKED_CAST")
-                    val steps = (doc.get("steps") as? List<*>)?.filterIsInstance<String>()
-                        ?: emptyList()
+                    val steps =
+                        (doc.get("steps") as? List<*>)?.filterIsInstance<String>()
+                            ?: emptyList()
 
                     Recipe(
                         id = id,
@@ -222,7 +298,6 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             }
     }
 
-
     fun setScanning(on: Boolean) {
         _scanning.value = on
     }
@@ -275,5 +350,9 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
                 _loading.value = false
             }
         }
+    }
+
+    companion object {
+        private const val DAILY_REMINDER_WORK_NAME = "daily_goals_reminder"
     }
 }
