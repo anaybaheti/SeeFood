@@ -67,12 +67,21 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
         loadSavedRecipesForEmail(mail)
         loadNutritionForEmail(mail)
     }
+    fun clearScanSession() {
+        // Clear everything related to the current scanning / ingredients session
+        _ingredients.value = emptyList()
+        _selected.value = emptySet()
+        _current.value = emptyList()
+        _history.value = emptyList()
+        _scanning.value = true  // or false, depending on what you want as default
+    }
 
     fun clearUserProfile() {
         firstName = null
         lastName = null
         email = null
         clearTodayMeals()
+        clearScanSession()
     }
 
     fun saveUserProfileToFirestore(
