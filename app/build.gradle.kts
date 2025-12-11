@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("com.google.gms.google-services")   // <-- REQUIRED for Firebase
+    id("com.google.gms.google-services")
 }
 
 val localProps = Properties()
@@ -36,7 +36,7 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true   // ensure BuildConfig is generated
+        buildConfig = true   // BuildConfig is generated
     }
 
     buildTypes {
@@ -61,15 +61,11 @@ android {
 }
 
 dependencies {
-    // ------------------------------------
-    // Firebase Auth (required)
-    // ------------------------------------
+
+    // Firebase Auth
     implementation(platform("com.google.firebase:firebase-bom:33.1.1"))
     implementation("com.google.firebase:firebase-auth")
 
-    // ------------------------------------
-    // Existing dependencies (unchanged)
-    // ------------------------------------
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -109,8 +105,6 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-
-
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

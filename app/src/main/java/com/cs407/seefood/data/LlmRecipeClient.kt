@@ -44,7 +44,7 @@ class LlmRecipeClient(
 
     private val mediaType = "application/json; charset=utf-8".toMediaType()
 
-    // ---------- RECIPE SUGGESTIONS ----------
+    //  RECIPE SUGGESTIONS
 
     suspend fun suggest(ingredients: List<String>): List<Recipe> = withContext(Dispatchers.IO) {
         if (groqApiKey.isBlank()) {
@@ -159,7 +159,7 @@ class LlmRecipeClient(
         return s
     }
 
-    // ---------- NUTRITION ESTIMATION ----------
+    //  NUTRITION ESTIMATION
 
     suspend fun estimateNutrition(recipe: Recipe): NutritionInfo = withContext(Dispatchers.IO) {
         if (groqApiKey.isBlank()) {
@@ -255,7 +255,7 @@ class LlmRecipeClient(
         return s
     }
 
-    // ---------- FALLBACK SAMPLE RECIPES ----------
+    // FALLBACK SAMPLE RECIPES
 
     private fun sampleRecipes(): List<Recipe> = listOf(
         Recipe(

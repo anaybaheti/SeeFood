@@ -11,7 +11,6 @@ object NavRoutes {
     const val Recipes = "recipes"
     const val Nutrition = "nutrition"
     const val Profile = "profile"
-
     const val Omelette = "omelette"
 
     const val Pancakes = "pancakes"

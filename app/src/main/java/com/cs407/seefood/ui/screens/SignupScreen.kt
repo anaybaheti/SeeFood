@@ -88,7 +88,7 @@ fun SignupScreen(
                 firstName.isNotBlank() && lastName.isNotBlank() &&
                 email.isNotBlank() && password.isNotBlank()
 
-    // ********* LAYOUT FIX: single scrollable Column *********
+    //  LAYOUT FIX: single scrollable Column
     Column(
         modifier = Modifier
             .fillMaxSize()

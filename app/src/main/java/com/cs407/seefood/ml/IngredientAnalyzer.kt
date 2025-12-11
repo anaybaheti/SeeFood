@@ -95,11 +95,6 @@ class IngredientAnalyzer(
             "building","lamp","picture","frame","door","cabinet"
         )
 
-        // Words that usually refer to food / dishes (even if not specific ingredients)
-//        private val FOOD_CONTEXT = setOf(
-//            "food","dish","meal","snack","breakfast","lunch","dinner",
-//            "plate","bowl","cup","mug","bottle","glass","sauce","salad","soup"
-//        )
 
         // Common ingredient tokens (helps us normalize multi-word labels)
         private val FOOD_TOKENS = setOf(
@@ -142,9 +137,6 @@ class IngredientAnalyzer(
 
             // If it contains an ingredient token, it's food
             if (FOOD_TOKENS.any { l.contains(it) }) return true
-
-            // If it contains a generic "food context" word, treat as food-related
-//            if (FOOD_CONTEXT.any { l.contains(it) }) return true
 
             return false
         }

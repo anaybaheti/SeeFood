@@ -45,19 +45,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.cs407.seefood.R
 
-//@Composable
-//fun HomeScreen(
-//    firstName: String?,
-//    onScan: () -> Unit,
-//    onRecipes: () -> Unit,
-//    onNutrition: () -> Unit,
-//    onProfile: () -> Unit,
-//    onOpenOmelette: () -> Unit,
-//    onOpenPancakes: () -> Unit,
-//    onOpenCaprese: () -> Unit,
-//    onOpenPasta: () -> Unit
-//) {
-
 @Composable
 fun HomeScreen(
     firstName: String?,
@@ -66,7 +53,7 @@ fun HomeScreen(
     onPancakes: () -> Unit,
     onCaprese: () -> Unit,
     onPasta: () -> Unit,
-    onRecipes: () -> Unit,   // 👈 bottom nav “Recipes” tab
+    onRecipes: () -> Unit,
     onNutrition: () -> Unit,
     onProfile: () -> Unit
 ) {

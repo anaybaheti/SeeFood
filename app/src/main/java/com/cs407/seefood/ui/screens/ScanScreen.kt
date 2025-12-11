@@ -126,7 +126,6 @@ fun ScanScreen(
                 .padding(bottom = 24.dp)
                 .size(88.dp)
                 .clickable {
-                    // Use this as your "capture" → go to ConfirmIngredients screen
                     onConfirm()
                 }
         ) {
