@@ -26,7 +26,8 @@ import java.util.concurrent.TimeUnit
 data class DailyGoals(
     val calories: Int = 2000,
     val proteinGrams: Int = 150,
-    val waterGlasses: Int = 8
+    val carbsGrams: Int = 250,
+    val fatGrams: Int = 65
 )
 
 // Model for a logged meal in the nutrition tracker
@@ -67,6 +68,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
         loadSavedRecipesForEmail(mail)
         loadNutritionForEmail(mail)
     }
+
     fun clearScanSession() {
         // Clear everything related to the current scanning / ingredients session
         _ingredients.value = emptyList()
@@ -146,8 +148,13 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     private val _darkModeEnabled = MutableStateFlow(false)
     val darkModeEnabled: StateFlow<Boolean> = _darkModeEnabled
 
-    fun updateDailyGoals(calories: Int, proteinGrams: Int, waterGlasses: Int) {
-        _dailyGoals.value = DailyGoals(calories, proteinGrams, waterGlasses)
+    fun updateDailyGoals(
+        calories: Int,
+        proteinGrams: Int,
+        carbsGrams: Int,
+        fatGrams: Int
+    ) {
+        _dailyGoals.value = DailyGoals(calories, proteinGrams, carbsGrams, fatGrams)
     }
 
     fun setRemindersEnabled(enabled: Boolean) {

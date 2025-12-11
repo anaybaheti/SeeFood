@@ -1,38 +1,13 @@
 package com.cs407.seefood.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +34,6 @@ fun ProfileScreen(
 ) {
     val goals by vm.dailyGoals.collectAsState()
     val remindersOn by vm.remindersEnabled.collectAsState()
-//    val darkModeOn by vm.darkModeEnabled.collectAsState()
 
     var showEditGoals by remember { mutableStateOf(false) }
 
@@ -67,10 +41,9 @@ fun ProfileScreen(
     val lightTop = Color(0xFFE8FFF5)
     val textDark = Color(0xFF111827)
 
-    // Derive initials, e.g. "Alex Johnson" -> "AJ"
     val initials = remember(firstName, lastName) {
-        val f = firstName.trim().takeIf { it.isNotEmpty() }?.firstOrNull()?.uppercase()
-        val l = lastName.trim().takeIf { it.isNotEmpty() }?.firstOrNull()?.uppercase()
+        val f = firstName.trim().firstOrNull()?.uppercase()
+        val l = lastName.trim().firstOrNull()?.uppercase()
         when {
             f != null && l != null -> "$f$l"
             f != null -> f.toString()
@@ -82,11 +55,7 @@ fun ProfileScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(lightTop, Color.White)
-                )
-            )
+            .background(Brush.verticalGradient(listOf(lightTop, Color.White)))
     ) {
         Column(
             modifier = Modifier
@@ -97,22 +66,21 @@ fun ProfileScreen(
         ) {
 
             Text(
-                text = "Profile & Settings",
+                "Profile & Settings",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = textDark
             )
 
+            // Profile card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(4.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
@@ -123,7 +91,7 @@ fun ProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = initials,
+                            initials,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF4B5563)
@@ -134,83 +102,54 @@ fun ProfileScreen(
 
                     Column {
                         Text(
-                            text = "${firstName.trim()} ${lastName.trim()}".trim(),
+                            "${firstName.trim()} ${lastName.trim()}".trim(),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = textDark
                         )
-                        Text(
-                            text = email,
-                            fontSize = 13.sp,
-                            color = Color(0xFF6B7280)
-                        )
+                        Text(email, fontSize = 13.sp, color = Color(0xFF6B7280))
                     }
                 }
             }
 
+            // Daily Goals Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Daily Goals",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textDark
-                )
-                TextButton(onClick = { showEditGoals = true }) {
-                    Text("Edit")
-                }
+                Text("Daily Goals", style = MaterialTheme.typography.titleMedium, color = textDark)
+                TextButton(onClick = { showEditGoals = true }) { Text("Edit") }
             }
 
+            // Daily Goals Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                elevation = CardDefaults.cardElevation(2.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     GoalRow("🔥", "Calories", "${goals.calories} cal")
-                    GoalRow("💪", "Protein", "${goals.proteinGrams}g")
-                    GoalRow("💧", "Water", "${goals.waterGlasses} glasses")
+                    GoalRow("💪", "Protein", "${goals.proteinGrams} g")
+                    GoalRow("🍞", "Carbs", "${goals.carbsGrams} g")
+                    GoalRow("🧈", "Fat", "${goals.fatGrams} g")
                 }
             }
 
-            Text(
-                text = "Settings",
-                style = MaterialTheme.typography.titleMedium,
-                color = textDark
-            )
+            // Settings
+            Text("Settings", style = MaterialTheme.typography.titleMedium, color = textDark)
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                shape = RoundedCornerShape(24.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SettingRow(
                         label = "Reminders",
                         checked = remindersOn,
                         onCheckedChange = { vm.setRemindersEnabled(it) },
                         brandGreen = brandGreen
                     )
-//                    SettingRow(
-//                        label = "Dark Mode",
-//                        checked = darkModeOn,
-//                        onCheckedChange = { vm.setDarkModeEnabled(it) },
-//                        brandGreen = brandGreen
-//                    )
                 }
             }
 
@@ -218,20 +157,11 @@ fun ProfileScreen(
 
             OutlinedButton(
                 onClick = onLogout,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(999.dp),
-                border = ButtonDefaults.outlinedButtonBorder,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFFEF4444)
-                )
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444))
             ) {
-                Text(
-                    text = "↩ Logout",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Text("↩ Logout", fontSize = 15.sp, fontWeight = FontWeight.Medium)
             }
         }
 
@@ -249,8 +179,8 @@ fun ProfileScreen(
     if (showEditGoals) {
         EditGoalsDialog(
             current = goals,
-            onSave = { c, p, w ->
-                vm.updateDailyGoals(c, p, w)
+            onSave = { c, p, carbs, fat ->
+                vm.updateDailyGoals(c, p, carbs, fat)
                 showEditGoals = false
             },
             onDismiss = { showEditGoals = false }
@@ -259,34 +189,23 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun GoalRow(
-    emoji: String,
-    label: String,
-    value: String
-) {
+private fun GoalRow(emoji: String, label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text("$emoji $label", fontSize = 14.sp, color = Color(0xFF4B5563))
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF111827))
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Medium)
     }
 }
 
 @Composable
-private fun SettingRow(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    brandGreen: Color
-) {
+private fun SettingRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, brandGreen: Color) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, fontSize = 14.sp, color = Color(0xFF111827))
+        Text(label, fontSize = 14.sp)
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
@@ -301,54 +220,61 @@ private fun SettingRow(
 @Composable
 private fun EditGoalsDialog(
     current: DailyGoals,
-    onSave: (Int, Int, Int) -> Unit,
+    onSave: (Int, Int, Int, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var caloriesText by rememberSaveable { mutableStateOf(current.calories.toString()) }
-    var proteinText by rememberSaveable { mutableStateOf(current.proteinGrams.toString()) }
-    var waterText by rememberSaveable { mutableStateOf(current.waterGlasses.toString()) }
+    var calories by rememberSaveable { mutableStateOf(current.calories.toString()) }
+    var protein by rememberSaveable { mutableStateOf(current.proteinGrams.toString()) }
+    var carbs by rememberSaveable { mutableStateOf(current.carbsGrams.toString()) }
+    var fat by rememberSaveable { mutableStateOf(current.fatGrams.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit daily goals") },
+        title = { Text("Edit Daily Goals") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
                 OutlinedTextField(
-                    value = caloriesText,
-                    onValueChange = { caloriesText = it },
+                    value = calories,
+                    onValueChange = { calories = it },
                     label = { Text("Calories (kcal)") },
-                    singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
 
                 OutlinedTextField(
-                    value = proteinText,
-                    onValueChange = { proteinText = it },
+                    value = protein,
+                    onValueChange = { protein = it },
                     label = { Text("Protein (g)") },
-                    singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
 
                 OutlinedTextField(
-                    value = waterText,
-                    onValueChange = { waterText = it },
-                    label = { Text("Water (glasses)") },
-                    singleLine = true,
+                    value = carbs,
+                    onValueChange = { carbs = it },
+                    label = { Text("Carbs (g)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                OutlinedTextField(
+                    value = fat,
+                    onValueChange = { fat = it },
+                    label = { Text("Fat (g)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                val c = caloriesText.toIntOrNull() ?: current.calories
-                val p = proteinText.toIntOrNull() ?: current.proteinGrams
-                val w = waterText.toIntOrNull() ?: current.waterGlasses
-                onSave(c, p, w)
-            }) { Text("Save") }
+                onSave(
+                    calories.toIntOrNull() ?: current.calories,
+                    protein.toIntOrNull() ?: current.proteinGrams,
+                    carbs.toIntOrNull() ?: current.carbsGrams,
+                    fat.toIntOrNull() ?: current.fatGrams
+                )
+            }) {
+                Text("Save")
+            }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
