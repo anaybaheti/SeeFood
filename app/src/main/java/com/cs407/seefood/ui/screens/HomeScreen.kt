@@ -434,11 +434,28 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.cs407.seefood.R
 
+//@Composable
+//fun HomeScreen(
+//    firstName: String?,
+//    onScan: () -> Unit,
+//    onRecipes: () -> Unit,
+//    onNutrition: () -> Unit,
+//    onProfile: () -> Unit,
+//    onOpenOmelette: () -> Unit,
+//    onOpenPancakes: () -> Unit,
+//    onOpenCaprese: () -> Unit,
+//    onOpenPasta: () -> Unit
+//) {
+
 @Composable
 fun HomeScreen(
     firstName: String?,
     onScan: () -> Unit,
-    onRecipes: () -> Unit,
+    onOmelette: () -> Unit,
+    onPancakes: () -> Unit,
+    onCaprese: () -> Unit,
+    onPasta: () -> Unit,
+    onRecipes: () -> Unit,   // 👈 bottom nav “Recipes” tab
     onNutrition: () -> Unit,
     onProfile: () -> Unit
 ) {
@@ -567,7 +584,7 @@ fun HomeScreen(
                         brandGreen = brandGreen,
                         imageRes = R.drawable.omelette,
                         modifier = Modifier.weight(1f),
-                        onClick = onRecipes
+                        onClick = onOmelette
                     )
                     RecipeCard(
                         title = "Caprese",
@@ -575,7 +592,7 @@ fun HomeScreen(
                         brandGreen = brandGreen,
                         imageRes = R.drawable.caprese,
                         modifier = Modifier.weight(1f),
-                        onClick = onRecipes
+                        onClick = onCaprese
                     )
                 }
 
@@ -590,7 +607,7 @@ fun HomeScreen(
                         brandGreen = brandGreen,
                         imageRes = R.drawable.pancakes,
                         modifier = Modifier.weight(1f),
-                        onClick = onRecipes
+                        onClick = onPancakes
                     )
                     RecipeCard(
                         title = "Pasta",
@@ -598,7 +615,7 @@ fun HomeScreen(
                         brandGreen = brandGreen,
                         imageRes = R.drawable.pasta,
                         modifier = Modifier.weight(1f),
-                        onClick = onRecipes
+                        onClick = onPasta
                     )
                 }
             }
