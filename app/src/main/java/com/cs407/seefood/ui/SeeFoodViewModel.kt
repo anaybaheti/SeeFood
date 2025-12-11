@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.cs407.seefood.data.SeeFoodRepository
 import com.cs407.seefood.network.Recipe
 import com.cs407.seefood.notifications.DailyReminderWorker
+import com.cs407.seefood.ui.data.DailyGoalsDataStore
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +46,9 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
 
     private val repo = SeeFoodRepository()
 
+    // 🔹 DataStore for daily goals persistence
+    private val goalsStore = DailyGoalsDataStore(app.applicationContext)
+
     //  FIRESTORE (points to database ID "seefood1")
     private val db: FirebaseFirestore =
         FirebaseFirestore.getInstance(FirebaseApp.getInstance(), "seefood1")
@@ -70,12 +74,11 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clearScanSession() {
-        // Clear everything related to the current scanning / ingredients session
         _ingredients.value = emptyList()
         _selected.value = emptySet()
         _current.value = emptyList()
         _history.value = emptyList()
-        _scanning.value = true  // or false, depending on what you want as default
+        _scanning.value = true
     }
 
     fun clearUserProfile() {
@@ -127,9 +130,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
 
                     setUserProfile(first, last, mail)
                     onResult(true)
-                } else {
-                    onResult(false)
-                }
+                } else onResult(false)
             }
             .addOnFailureListener { e ->
                 e.printStackTrace()
@@ -148,23 +149,34 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     private val _darkModeEnabled = MutableStateFlow(false)
     val darkModeEnabled: StateFlow<Boolean> = _darkModeEnabled
 
+    init {
+        // Load saved goals when the app starts
+        viewModelScope.launch {
+            val saved = goalsStore.loadGoals()
+            _dailyGoals.value = saved
+        }
+    }
+
     fun updateDailyGoals(
         calories: Int,
         proteinGrams: Int,
         carbsGrams: Int,
         fatGrams: Int
     ) {
-        _dailyGoals.value = DailyGoals(calories, proteinGrams, carbsGrams, fatGrams)
+        val newGoals = DailyGoals(calories, proteinGrams, carbsGrams, fatGrams)
+        _dailyGoals.value = newGoals
+
+        // Persist to DataStore
+        viewModelScope.launch {
+            goalsStore.saveGoals(newGoals)
+        }
     }
 
     fun setRemindersEnabled(enabled: Boolean) {
         _remindersEnabled.value = enabled
         val ctx = getApplication<Application>().applicationContext
-        if (enabled) {
-            scheduleDailyReminder(ctx)
-        } else {
-            cancelDailyReminder(ctx)
-        }
+        if (enabled) scheduleDailyReminder(ctx)
+        else cancelDailyReminder(ctx)
     }
 
     fun setDarkModeEnabled(enabled: Boolean) {
@@ -179,16 +191,14 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            if (timeInMillis <= now) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
+            if (timeInMillis <= now) add(Calendar.DAY_OF_YEAR, 1)
         }
 
-        val initialDelay = calendar.timeInMillis - now
+        val delay = calendar.timeInMillis - now
 
         val request =
             PeriodicWorkRequestBuilder<DailyReminderWorker>(24, TimeUnit.HOURS)
-                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
                 .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -230,17 +240,10 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     private val _meals = mutableStateListOf<Meal>()
     val meals: List<Meal> get() = _meals
 
-    val totalCalories: Int
-        get() = _meals.sumOf { it.calories }
-
-    val totalProtein: Int
-        get() = _meals.sumOf { it.protein }
-
-    val totalCarbs: Int
-        get() = _meals.sumOf { it.carbs }
-
-    val totalFat: Int
-        get() = _meals.sumOf { it.fat }
+    val totalCalories get() = _meals.sumOf { it.calories }
+    val totalProtein get() = _meals.sumOf { it.protein }
+    val totalCarbs get() = _meals.sumOf { it.carbs }
+    val totalFat get() = _meals.sumOf { it.fat }
 
     fun addMealFromUser(
         name: String,
@@ -258,16 +261,14 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             fat = fat
         )
         _meals.add(meal)
-        saveMealToFirestore(meal, recipe = null)
+        saveMealToFirestore(meal, null)
     }
 
     fun clearTodayMeals() {
         _meals.clear()
     }
 
-    // 🚨 New: Reset today’s nutrition (local + Firestore)
     fun resetTodayNutrition() {
-        // clear local list so UI updates immediately
         _meals.clear()
 
         val mail = email ?: return
@@ -277,24 +278,18 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             .document(mail)
             .collection("meals")
             .get()
-            .addOnSuccessListener { snapshot ->
+            .addOnSuccessListener { snap ->
                 val batch = db.batch()
-                for (doc in snapshot.documents) {
-                    batch.delete(doc.reference)
-                }
+                for (doc in snap.documents) batch.delete(doc.reference)
                 batch.commit()
             }
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-            }
+            .addOnFailureListener { e -> e.printStackTrace() }
     }
 
-    // Called when the user taps "Cook Now" on a recipe
     fun logCookedRecipe(recipe: Recipe) {
         viewModelScope.launch {
             try {
                 val info = repo.estimateNutritionFor(recipe)
-
                 val meal = Meal(
                     name = recipe.title,
                     time = "Cooked now",
@@ -303,7 +298,6 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
                     carbs = info.carbs_g,
                     fat = info.fat_g
                 )
-
                 _meals.add(meal)
                 saveMealToFirestore(meal, recipe)
             } catch (e: Exception) {
@@ -332,9 +326,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             .collection("meals")
             .document(meal.id.toString())
             .set(data)
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-            }
+            .addOnFailureListener { e -> e.printStackTrace() }
     }
 
     private fun loadNutritionForEmail(mail: String) {
@@ -354,23 +346,13 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
                     val carbs = doc.getLong("carbs")?.toInt() ?: 0
                     val fat = doc.getLong("fat")?.toInt() ?: 0
 
-                    Meal(
-                        id = id,
-                        name = name,
-                        time = time,
-                        calories = calories,
-                        protein = protein,
-                        carbs = carbs,
-                        fat = fat
-                    )
+                    Meal(id, name, time, calories, protein, carbs, fat)
                 }
 
                 _meals.clear()
                 _meals.addAll(list)
             }
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-            }
+            .addOnFailureListener { e -> e.printStackTrace() }
     }
 
     // ---------- Saved recipes & scanning ----------
@@ -382,33 +364,22 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             .document(mail)
             .collection("items")
             .get()
-            .addOnSuccessListener { snapshot ->
-                val list = snapshot.documents.mapNotNull { doc ->
+            .addOnSuccessListener { snap ->
+                val list = snap.documents.mapNotNull { doc ->
                     val id = doc.getString("id") ?: doc.id
-                    val title = doc.getString("title") ?: return@mapNotNull null
+                    val title = doc.getString("title")
+                        ?: return@mapNotNull null
                     val imageUrl = doc.getString("imageUrl")
-                    @Suppress("UNCHECKED_CAST")
-                    val ingredients =
-                        (doc.get("ingredients") as? List<*>)?.filterIsInstance<String>()
-                            ?: emptyList()
-                    @Suppress("UNCHECKED_CAST")
-                    val steps =
-                        (doc.get("steps") as? List<*>)?.filterIsInstance<String>()
-                            ?: emptyList()
+                    val ingredients = (doc.get("ingredients") as? List<*>)?.filterIsInstance<String>()
+                        ?: emptyList()
+                    val steps = (doc.get("steps") as? List<*>)?.filterIsInstance<String>()
+                        ?: emptyList()
 
-                    Recipe(
-                        id = id,
-                        title = title,
-                        imageUrl = imageUrl,
-                        ingredients = ingredients,
-                        steps = steps
-                    )
+                    Recipe(id, title, imageUrl, ingredients, steps)
                 }
                 _savedRecipes.value = list
             }
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-            }
+            .addOnFailureListener { e -> e.printStackTrace() }
     }
 
     fun refreshSavedRecipes() {
@@ -417,13 +388,14 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
         loadNutritionForEmail(mail)
     }
 
-    private fun recipeDocId(recipe: Recipe): String =
+    private fun recipeDocId(recipe: Recipe) =
         if (recipe.id.isNotBlank()) recipe.id else recipe.title
 
     fun saveRecipeForCurrentUser(recipe: Recipe) {
         val mail = email ?: return
 
         if (_savedRecipes.value.any { it.id == recipe.id }) return
+
         _savedRecipes.value = _savedRecipes.value + recipe
 
         val data = hashMapOf(
@@ -439,14 +411,11 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             .collection("items")
             .document(recipeDocId(recipe))
             .set(data)
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-            }
+            .addOnFailureListener { e -> e.printStackTrace() }
     }
 
     fun removeSavedRecipe(recipe: Recipe) {
         val mail = email ?: return
-
         _savedRecipes.value = _savedRecipes.value.filterNot { it.id == recipe.id }
 
         db.collection("savedRecipes")
@@ -454,9 +423,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
             .collection("items")
             .document(recipeDocId(recipe))
             .delete()
-            .addOnFailureListener { e ->
-                e.printStackTrace()
-            }
+            .addOnFailureListener { e -> e.printStackTrace() }
     }
 
     fun setScanning(on: Boolean) {
@@ -474,8 +441,8 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun toggleIngredient(name: String) {
-        _selected.value = _selected.value.let { s ->
-            if (name in s) s - name else s + name
+        _selected.value = _selected.value.let { set ->
+            if (name in set) set - name else set + name
         }
     }
 
@@ -488,10 +455,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setIngredients(list: List<String>) {
-        val clean = list
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
+        val clean = list.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
         _ingredients.value = clean
         _selected.value = clean.toSet()
     }
@@ -504,7 +468,7 @@ class SeeFoodViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             _loading.value = true
             try {
-                val result: List<Recipe> = repo.suggestRecipesFrom(use)
+                val result = repo.suggestRecipesFrom(use)
                 _current.value = result
                 _history.value = listOf(result) + _history.value
             } finally {
